@@ -5,6 +5,7 @@
         subtitle="Kelola profil guru, nomor NIP, mata pelajaran yang diampu, dan akun login perpustakaan."
     >
         <x-slot:actions>
+            @can('guru.create')
             <button
                 type="button"
                 wire:click="create"
@@ -13,6 +14,7 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span>Tambah Guru</span>
             </button>
+            @endcan
         </x-slot:actions>
     </x-page-header>
 
@@ -51,6 +53,7 @@
                             </td>
                             <td class="px-5 py-3.5 sm:px-6 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-1.5">
+                                    @can('guru.edit')
                                     <button
                                         type="button"
                                         wire:click="edit({{ $t->id }})"
@@ -58,6 +61,8 @@
                                     >
                                         Edit
                                     </button>
+                                    @endcan
+                                    @can('guru.delete')
                                     <button
                                         type="button"
                                         wire:click="delete({{ $t->id }})"
@@ -66,6 +71,7 @@
                                     >
                                         Hapus
                                     </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

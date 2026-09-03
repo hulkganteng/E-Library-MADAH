@@ -2,18 +2,30 @@
 
 namespace App\Livewire\Announcements;
 
+use App\Models\Announcement;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Announcement;
 
 class Index extends Component
 {
     use WithPagination;
 
-    public $showModal = false, $editing = null, $title = '', $content = '', $audience = 'semua', $is_published = true;
+    public $showModal = false;
+
+    public $editing = null;
+
+    public $title = '';
+
+    public $content = '';
+
+    public $audience = 'semua';
+
+    public $is_published = true;
 
     public function create()
     {
+        Gate::authorize('pengumuman.create');
         $this->reset('editing', 'title', 'content');
         $this->audience = 'semua';
         $this->is_published = true;
@@ -22,6 +34,7 @@ class Index extends Component
 
     public function edit(Announcement $item)
     {
+        Gate::authorize('pengumuman.edit');
         $this->editing = $item->id;
         $this->fill($item->only('title', 'content', 'audience', 'is_published'));
         $this->showModal = true;
@@ -29,6 +42,7 @@ class Index extends Component
 
     public function save()
     {
+        Gate::authorize($this->editing ? 'pengumuman.edit' : 'pengumuman.create');
         $this->validate([
             'title' => 'required|string|max:200',
             'content' => 'required|string',
@@ -44,6 +58,7 @@ class Index extends Component
 
     public function delete(Announcement $item)
     {
+        Gate::authorize('pengumuman.delete');
         $item->delete();
         $this->dispatch('notify', ['message' => 'Dihapus.']);
     }

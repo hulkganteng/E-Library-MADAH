@@ -65,6 +65,7 @@
                     </x-select>
                 </div>
 
+                @can('laporan.export')
                 <div class="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
                     <button
                         type="button"
@@ -83,6 +84,7 @@
                         <span>Unduh Berkas Excel</span>
                     </button>
                 </div>
+                @endcan
             </x-card>
         </div>
 

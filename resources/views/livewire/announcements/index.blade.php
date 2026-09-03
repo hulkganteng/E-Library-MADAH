@@ -5,6 +5,7 @@
         subtitle="Kelola siaran pengumuman, jadwal literasi, dan informasi bagi seluruh civitas madrasah."
     >
         <x-slot:actions>
+            @can('pengumuman.create')
             <button
                 type="button"
                 wire:click="create"
@@ -13,6 +14,7 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span>Buat Pengumuman Baru</span>
             </button>
+            @endcan
         </x-slot:actions>
     </x-page-header>
 
@@ -41,6 +43,7 @@
                 </div>
 
                 <div class="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                    @can('pengumuman.edit')
                     <button
                         type="button"
                         wire:click="edit({{ $item->id }})"
@@ -48,6 +51,8 @@
                     >
                         Edit
                     </button>
+                    @endcan
+                    @can('pengumuman.delete')
                     <button
                         type="button"
                         wire:click="delete({{ $item->id }})"
@@ -56,6 +61,7 @@
                     >
                         Hapus
                     </button>
+                    @endcan
                 </div>
             </div>
         @empty

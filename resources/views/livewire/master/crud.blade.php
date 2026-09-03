@@ -5,6 +5,7 @@
         :subtitle="'Kelola referensi data ' . strtolower($name) . ' perpustakaan.'"
     >
         <x-slot:actions>
+            @can($permission . '.create')
             <button
                 type="button"
                 wire:click="create"
@@ -13,6 +14,7 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span>Tambah {{ $name }}</span>
             </button>
+            @endcan
         </x-slot:actions>
     </x-page-header>
 
@@ -44,6 +46,7 @@
                             </td>
                             <td class="px-5 py-3.5 sm:px-6 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-1.5">
+                                    @can($permission . '.edit')
                                     <button
                                         type="button"
                                         wire:click="edit({{ $item->id }})"
@@ -51,6 +54,8 @@
                                     >
                                         Edit
                                     </button>
+                                    @endcan
+                                    @can($permission . '.delete')
                                     <button
                                         type="button"
                                         wire:click="delete({{ $item->id }})"
@@ -59,6 +64,7 @@
                                     >
                                         Hapus
                                     </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

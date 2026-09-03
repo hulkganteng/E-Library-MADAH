@@ -2,22 +2,38 @@
 
 namespace App\Livewire\Master;
 
-use Livewire\Component;
 use App\Models\Author;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Component;
 
 class Authors extends Component
 {
-    public $showModal = false, $editing = null, $name = '', $secondary = '', $search = '';
-    public $nameKey = 'name', $secondaryProp = 'biography', $secondaryLabel = 'Biografi';
+    public $showModal = false;
+
+    public $editing = null;
+
+    public $name = '';
+
+    public $secondary = '';
+
+    public $search = '';
+
+    public $nameKey = 'name';
+
+    public $secondaryProp = 'biography';
+
+    public $secondaryLabel = 'Biografi';
 
     public function create()
     {
+        Gate::authorize('penulis.create');
         $this->reset('editing', 'name', 'secondary');
         $this->showModal = true;
     }
 
     public function edit(Author $item)
     {
+        Gate::authorize('penulis.edit');
         $this->editing = $item->id;
         $this->name = $item->name;
         $this->secondary = $item->biography;
@@ -26,8 +42,9 @@ class Authors extends Component
 
     public function save()
     {
-        $this->validate(['name' => 'required|string|max:150|unique:authors,name,' . $this->editing]);
-        $item = $this->editing ? Author::findOrFail($this->editing) : new Author();
+        Gate::authorize($this->editing ? 'penulis.edit' : 'penulis.create');
+        $this->validate(['name' => 'required|string|max:150|unique:authors,name,'.$this->editing]);
+        $item = $this->editing ? Author::findOrFail($this->editing) : new Author;
         $item->name = $this->name;
         $item->slug = str()->slug($this->name);
         $item->biography = $this->secondary;
@@ -38,6 +55,7 @@ class Authors extends Component
 
     public function delete(Author $item)
     {
+        Gate::authorize('penulis.delete');
         $item->delete();
         $this->dispatch('notify', ['message' => 'Dihapus.']);
     }
@@ -47,6 +65,7 @@ class Authors extends Component
         return view('livewire.master.crud', [
             'items' => Author::when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))->orderBy('name')->paginate(10),
             'name' => 'Penulis',
+            'permission' => 'penulis',
         ]);
     }
 }

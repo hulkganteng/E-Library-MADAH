@@ -2,25 +2,46 @@
 
 namespace App\Livewire\Members;
 
+use App\Models\Teacher;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{User, Teacher};
 
 class Teachers extends Component
 {
     use WithPagination;
 
-    public $showModal = false, $editing = null, $search = '';
-    public $name, $email, $password, $nip, $subject, $phone, $address;
+    public $showModal = false;
+
+    public $editing = null;
+
+    public $search = '';
+
+    public $name;
+
+    public $email;
+
+    public $password;
+
+    public $nip;
+
+    public $subject;
+
+    public $phone;
+
+    public $address;
 
     public function create()
     {
+        Gate::authorize('guru.create');
         $this->reset('editing', 'name', 'email', 'password', 'nip', 'subject', 'phone', 'address');
         $this->showModal = true;
     }
 
     public function edit(Teacher $teacher)
     {
+        Gate::authorize('guru.edit');
         $this->editing = $teacher->id;
         $this->name = $teacher->user->name;
         $this->email = $teacher->user->email;
@@ -32,15 +53,16 @@ class Teachers extends Component
 
     public function save()
     {
+        Gate::authorize($this->editing ? 'guru.edit' : 'guru.create');
         $id = $this->editing ? Teacher::findOrFail($this->editing)->user_id : null;
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,'.$id,
             'password' => $this->editing ? 'nullable|string|min:6' : 'required|string|min:6',
-            'nip' => 'nullable|string|max:30|unique:teachers,nip,' . $this->editing,
+            'nip' => 'nullable|string|max:30|unique:teachers,nip,'.$this->editing,
         ]);
 
-        $user = $this->editing ? Teacher::findOrFail($this->editing)->user : new User();
+        $user = $this->editing ? Teacher::findOrFail($this->editing)->user : new User;
         $user->name = $this->name;
         $user->email = $this->email;
         $user->phone = $this->phone;
@@ -64,6 +86,7 @@ class Teachers extends Component
 
     public function delete(Teacher $teacher)
     {
+        Gate::authorize('guru.delete');
         $teacher->user->delete();
         $this->dispatch('notify', ['message' => 'Guru dihapus.']);
     }

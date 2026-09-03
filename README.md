@@ -77,10 +77,12 @@ Katalog dapat dibuka tanpa masuk ke aplikasi.
 
 Sebelum mencatat buku, lengkapi data master agar informasi koleksi tetap rapi.
 
-1. Masuk sebagai Admin atau Pustakawan.
+1. Masuk sebagai Admin.
 2. Lengkapi menu **Kategori**, **Penulis**, **Penerbit**, dan **Rak**.
 3. Jika data siswa diperlukan, lengkapi **Kelas** terlebih dahulu.
-4. Tambahkan data anggota melalui menu **Siswa** atau **Guru** sesuai hak akses Anda.
+4. Tambahkan data anggota melalui menu **Siswa** atau **Guru**.
+
+Pustakawan dapat melihat data master dan mengimpor data siswa, tetapi perubahan data master dan anggota tetap menjadi kewenangan Admin.
 
 ### Menambahkan buku dan eksemplar
 

@@ -2,25 +2,44 @@
 
 namespace App\Livewire\Loans;
 
+use App\Models\BookCopy;
+use App\Models\Loan;
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\{Loan, BookCopy, User, Setting};
 
 class Index extends Component
 {
     use WithPagination;
 
     public $tab = 'list';
+
     public $search = '';
 
     // Checkout
-    public $memberQuery = '', $copyCode = '', $dueDays, $selectedMember = null, $selectedCopy = null;
+    public $memberQuery = '';
+
+    public $copyCode = '';
+
+    public $dueDays;
+
+    public $selectedMember = null;
+
+    public $selectedCopy = null;
 
     // Return
-    public $returnCode = '', $returnInfo = null, $fine = 0;
+    public $returnCode = '';
+
+    public $returnInfo = null;
+
+    public $fine = 0;
 
     // Extend
-    public $loanId = null, $newDueAt;
+    public $loanId = null;
+
+    public $newDueAt;
 
     public function mount()
     {
@@ -29,6 +48,16 @@ class Index extends Component
 
     public function setTab($tab)
     {
+        abort_unless(in_array($tab, ['list', 'checkout', 'return'], true), 404);
+
+        if ($tab === 'checkout') {
+            Gate::authorize('peminjaman.create');
+        }
+
+        if ($tab === 'return') {
+            Gate::authorize('peminjaman.edit');
+        }
+
         $this->tab = $tab;
         $this->resetPage();
     }
@@ -50,14 +79,17 @@ class Index extends Component
 
     public function scanCopy()
     {
+        Gate::authorize('peminjaman.create');
         $this->validate(['copyCode' => 'required']);
         $copy = BookCopy::with('book')->where('inventory_code', $this->copyCode)->orWhere('qr_code', $this->copyCode)->first();
-        if (!$copy) {
+        if (! $copy) {
             $this->dispatch('notify', ['message' => 'Kode eksemplar tidak ditemukan.', 'type' => 'error']);
+
             return;
         }
         if ($copy->status !== 'tersedia') {
             $this->dispatch('notify', ['message' => 'Eksemplar sedang tidak tersedia.', 'type' => 'error']);
+
             return;
         }
         $this->selectedCopy = $copy;
@@ -65,8 +97,10 @@ class Index extends Component
 
     public function checkout()
     {
-        if (!$this->selectedMember || !$this->selectedCopy) {
+        Gate::authorize('peminjaman.create');
+        if (! $this->selectedMember || ! $this->selectedCopy) {
             $this->dispatch('notify', ['message' => 'Pilih anggota dan eksemplar.', 'type' => 'error']);
+
             return;
         }
         $member = User::find($this->selectedMember);
@@ -76,6 +110,7 @@ class Index extends Component
         $active = $member->loans()->where('status', '!=', 'dikembalikan')->count();
         if ($active >= $max) {
             $this->dispatch('notify', ['message' => "Anggota sudah meminjam $max buku.", 'type' => 'error']);
+
             return;
         }
 
@@ -102,15 +137,18 @@ class Index extends Component
 
     public function scanReturn()
     {
+        Gate::authorize('peminjaman.edit');
         $this->validate(['returnCode' => 'required']);
         $copy = BookCopy::with('book')->where('inventory_code', $this->returnCode)->orWhere('qr_code', $this->returnCode)->first();
-        if (!$copy) {
+        if (! $copy) {
             $this->dispatch('notify', ['message' => 'Kode eksemplar tidak ditemukan.', 'type' => 'error']);
+
             return;
         }
         $loan = $copy->activeLoan;
-        if (!$loan) {
+        if (! $loan) {
             $this->dispatch('notify', ['message' => 'Eksemplar ini tidak sedang dipinjam.', 'type' => 'error']);
+
             return;
         }
         $this->returnInfo = $loan->load('user');
@@ -120,6 +158,7 @@ class Index extends Component
 
     public function processReturn()
     {
+        Gate::authorize('peminjaman.edit');
         $loan = $this->returnInfo;
         $loan->update([
             'returned_at' => now(),
@@ -128,13 +167,15 @@ class Index extends Component
         ]);
         $loan->bookCopy->update(['status' => 'tersedia']);
         $this->reset('returnCode', 'returnInfo', 'fine');
-        $this->dispatch('notify', ['message' => 'Buku berhasil dikembalikan.' . ($this->fine > 0 ? " Denda: Rp" . number_format($this->fine, 0, ',', '.') : '')]);
+        $this->dispatch('notify', ['message' => 'Buku berhasil dikembalikan.'.($this->fine > 0 ? ' Denda: Rp'.number_format($this->fine, 0, ',', '.') : '')]);
     }
 
     public function extendLoan(Loan $loan)
     {
+        Gate::authorize('peminjaman.edit');
         if ($loan->status === 'dikembalikan' || $loan->isOverdue()) {
             $this->dispatch('notify', ['message' => 'Buku tidak dapat diperpanjang.', 'type' => 'error']);
+
             return;
         }
         $loan->update(['due_at' => $loan->due_at->addDays((int) Setting::get('loan_duration_days', 7))]);

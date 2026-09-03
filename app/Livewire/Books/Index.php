@@ -2,31 +2,68 @@
 
 namespace App\Livewire\Books;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\BooksImport;
-use App\Models\{Book, Category, Publisher, Shelf, Author, BookCopy};
+use App\Models\Author;
+use App\Models\Book;
+use App\Models\BookCopy;
+use App\Models\Category;
+use App\Models\Publisher;
+use App\Models\Shelf;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Index extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public string $search = '';
+
     public $showModal = false;
+
     public $editing = null;
-    public $title, $category_id, $publisher_id, $shelf_id, $isbn, $edition, $publish_year, $page_count, $type = 'fisik', $description, $is_repository = false, $cover, $authors = [], $initial_copies = 1;
+
+    public $title;
+
+    public $category_id;
+
+    public $publisher_id;
+
+    public $shelf_id;
+
+    public $isbn;
+
+    public $edition;
+
+    public $publish_year;
+
+    public $page_count;
+
+    public $type = 'fisik';
+
+    public $description;
+
+    public $is_repository = false;
+
+    public $cover;
+
+    public $authors = [];
+
+    public $initial_copies = 1;
+
     public $importFile;
 
     public function import()
     {
+        Gate::authorize('buku.import');
         $this->validate(['importFile' => 'required|file|mimes:xlsx,xls,csv|max:4096']);
-        $import = new BooksImport();
+        $import = new BooksImport;
         Excel::import($import, $this->importFile->getRealPath());
         $msg = 'Import selesai.';
         if ($import->failed) {
-            $msg .= ' ' . count($import->failed) . ' baris gagal.';
+            $msg .= ' '.count($import->failed).' baris gagal.';
         }
         $this->reset('importFile');
         $this->dispatch('notify', ['message' => $msg]);
@@ -41,6 +78,7 @@ class Index extends Component
 
     public function create()
     {
+        Gate::authorize('buku.create');
         $this->reset('editing', 'title', 'category_id', 'publisher_id', 'shelf_id', 'isbn', 'edition', 'publish_year', 'page_count', 'description', 'cover');
         $this->authors = [];
         $this->type = 'fisik';
@@ -51,6 +89,7 @@ class Index extends Component
 
     public function edit(Book $book)
     {
+        Gate::authorize('buku.edit');
         $this->editing = $book->id;
         $this->fill($book->only('title', 'category_id', 'publisher_id', 'shelf_id', 'isbn', 'edition', 'publish_year', 'page_count', 'type', 'description', 'is_repository'));
         $this->authors = $book->authors->pluck('id')->map(fn ($v) => (string) $v)->toArray();
@@ -59,14 +98,15 @@ class Index extends Component
 
     public function save()
     {
+        Gate::authorize($this->editing ? 'buku.edit' : 'buku.create');
         $data = $this->validate([
             'title' => 'required|string|max:255',
             'category_id' => 'nullable|exists:categories,id',
             'publisher_id' => 'nullable|exists:publishers,id',
             'shelf_id' => 'nullable|exists:shelves,id',
-            'isbn' => 'nullable|string|max:20|unique:books,isbn,' . $this->editing,
+            'isbn' => 'nullable|string|max:20|unique:books,isbn,'.$this->editing,
             'edition' => 'nullable|string|max:50',
-            'publish_year' => 'nullable|integer|min:1900|max:' . now()->year,
+            'publish_year' => 'nullable|integer|min:1900|max:'.now()->year,
             'page_count' => 'nullable|integer|min:1',
             'type' => 'required|in:fisik,ebook',
             'description' => 'nullable|string',
@@ -78,8 +118,8 @@ class Index extends Component
             $data['cover'] = $this->cover->store('covers', 'public');
         }
 
-        $slug = str()->slug($this->title) . '-' . uniqid();
-        $book = $this->editing ? Book::findOrFail($this->editing) : new Book();
+        $slug = str()->slug($this->title).'-'.uniqid();
+        $book = $this->editing ? Book::findOrFail($this->editing) : new Book;
         $book->fill($data);
         $book->slug = $this->editing ? $book->slug : $slug;
         $book->is_repository = (bool) $this->is_repository;
@@ -87,7 +127,7 @@ class Index extends Component
 
         $book->authors()->sync($this->authors);
 
-        if (!$this->editing && $this->type === 'fisik' && $this->initial_copies > 0) {
+        if (! $this->editing && $this->type === 'fisik' && $this->initial_copies > 0) {
             for ($c = 1; $c <= $this->initial_copies; $c++) {
                 BookCopy::create([
                     'book_id' => $book->id,
@@ -105,6 +145,7 @@ class Index extends Component
 
     public function delete(Book $book)
     {
+        Gate::authorize('buku.delete');
         $book->delete();
         $this->dispatch('notify', ['message' => 'Buku dihapus.']);
     }

@@ -2,29 +2,57 @@
 
 namespace App\Livewire\Members;
 
-use Livewire\Component;
-use Livewire\WithPagination;
-use Livewire\WithFileUploads;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\StudentsImport;
-use App\Models\{User, Student, ClassRoom};
+use App\Models\ClassRoom;
+use App\Models\Student;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Students extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $showModal = false, $editing = null, $search = '';
-    public $name, $email, $password, $nis, $nisn, $gender = 'L', $birth_date, $class_id, $phone, $address;
+    public $showModal = false;
+
+    public $editing = null;
+
+    public $search = '';
+
+    public $name;
+
+    public $email;
+
+    public $password;
+
+    public $nis;
+
+    public $nisn;
+
+    public $gender = 'L';
+
+    public $birth_date;
+
+    public $class_id;
+
+    public $phone;
+
+    public $address;
+
     public $importFile;
 
     public function import()
     {
+        Gate::authorize('siswa.import');
         $this->validate(['importFile' => 'required|file|mimes:xlsx,xls,csv|max:4096']);
-        $import = new StudentsImport();
+        $import = new StudentsImport;
         Excel::import($import, $this->importFile->getRealPath());
         $msg = 'Import selesai.';
         if ($import->failed) {
-            $msg .= ' ' . count($import->failed) . ' baris gagal.';
+            $msg .= ' '.count($import->failed).' baris gagal.';
         }
         $this->reset('importFile');
         $this->dispatch('notify', ['message' => $msg]);
@@ -32,6 +60,7 @@ class Students extends Component
 
     public function create()
     {
+        Gate::authorize('siswa.create');
         $this->reset('editing', 'name', 'email', 'password', 'nis', 'nisn', 'birth_date', 'class_id', 'phone', 'address');
         $this->gender = 'L';
         $this->showModal = true;
@@ -39,6 +68,7 @@ class Students extends Component
 
     public function edit(Student $student)
     {
+        Gate::authorize('siswa.edit');
         $this->editing = $student->id;
         $this->name = $student->user->name;
         $this->email = $student->user->email;
@@ -50,18 +80,19 @@ class Students extends Component
 
     public function save()
     {
+        Gate::authorize($this->editing ? 'siswa.edit' : 'siswa.create');
         $id = $this->editing ? Student::findOrFail($this->editing)->user_id : null;
         $this->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,'.$id,
             'password' => $this->editing ? 'nullable|string|min:6' : 'required|string|min:6',
-            'nis' => 'nullable|string|max:30|unique:students,nis,' . $this->editing,
-            'nisn' => 'nullable|string|max:20|unique:students,nisn,' . $this->editing,
+            'nis' => 'nullable|string|max:30|unique:students,nis,'.$this->editing,
+            'nisn' => 'nullable|string|max:20|unique:students,nisn,'.$this->editing,
             'class_id' => 'nullable|exists:classes,id',
             'gender' => 'required|in:L,P',
         ]);
 
-        $user = $this->editing ? Student::findOrFail($this->editing)->user : new User();
+        $user = $this->editing ? Student::findOrFail($this->editing)->user : new User;
         $user->name = $this->name;
         $user->email = $this->email;
         $user->phone = $this->phone;
@@ -85,6 +116,7 @@ class Students extends Component
 
     public function delete(Student $student)
     {
+        Gate::authorize('siswa.delete');
         $student->user->delete();
         $this->dispatch('notify', ['message' => 'Siswa dihapus.']);
     }

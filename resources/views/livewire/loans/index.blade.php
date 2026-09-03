@@ -8,6 +8,8 @@
     {{-- Tabs Navigation --}}
     <div class="flex items-center gap-2 border-b border-slate-200/80 pb-3">
         @foreach(['list' => 'Daftar Peminjaman', 'checkout' => 'Peminjaman Baru', 'return' => 'Pengembalian Buku'] as $key => $label)
+            @continue($key === 'checkout' && auth()->user()->cannot('peminjaman.create'))
+            @continue($key === 'return' && auth()->user()->cannot('peminjaman.edit'))
             <button
                 type="button"
                 wire:click="setTab('{{ $key }}')"
@@ -26,7 +28,7 @@
     </div>
 
     {{-- TAB 1: CHECKOUT --}}
-    @if($tab === 'checkout')
+    @if($tab === 'checkout' && auth()->user()->can('peminjaman.create'))
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {{-- Step 1: Member Selection --}}
             <x-card heading="1. Pilih Anggota Peminjam" subheading="Cari berdasarkan nama lengkap atau email">
@@ -140,7 +142,7 @@
         </div>
 
     {{-- TAB 2: RETURN --}}
-    @elseif($tab === 'return')
+    @elseif($tab === 'return' && auth()->user()->can('peminjaman.edit'))
         <div class="mx-auto max-w-xl">
             <x-card heading="Proses Pengembalian Buku" subheading="Scan QR pada buku atau masukkan kode inventaris">
                 <x-slot:icon>
@@ -270,6 +272,7 @@
                                 </td>
                                 <td class="px-5 py-3.5 sm:px-6 text-right whitespace-nowrap">
                                     @if($loan->status !== 'dikembalikan' && !$loan->isOverdue())
+                                        @can('peminjaman.edit')
                                         <button
                                             type="button"
                                             wire:click="extendLoan({{ $loan->id }})"
@@ -278,6 +281,7 @@
                                         >
                                             Perpanjang
                                         </button>
+                                        @endcan
                                     @endif
                                 </td>
                             </tr>

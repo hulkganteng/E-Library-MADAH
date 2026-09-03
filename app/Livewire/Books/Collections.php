@@ -2,17 +2,22 @@
 
 namespace App\Livewire\Books;
 
+use App\Models\Book;
+use App\Models\BookCopy;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
-use App\Models\{Book, BookCopy};
 
 class Collections extends Component
 {
     public $book_id = null;
+
     public $addCount = 1;
+
     public $showQR = null;
 
     public function addCopies()
     {
+        Gate::authorize('eksemplar.create');
         $this->validate([
             'book_id' => 'required|exists:books,id',
             'addCount' => 'required|integer|min:1|max:50',
@@ -38,6 +43,7 @@ class Collections extends Component
 
     public function updateStatus(BookCopy $copy, string $status)
     {
+        Gate::authorize('eksemplar.edit');
         if (in_array($status, ['tersedia', 'rusak', 'hilang'])) {
             $copy->update(['status' => $status]);
         }
@@ -45,6 +51,7 @@ class Collections extends Component
 
     public function delete(BookCopy $copy)
     {
+        Gate::authorize('eksemplar.delete');
         $copy->delete();
         $this->dispatch('notify', ['message' => 'Eksemplar dihapus.']);
     }

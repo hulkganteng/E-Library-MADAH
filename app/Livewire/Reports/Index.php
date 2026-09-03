@@ -2,15 +2,25 @@
 
 namespace App\Livewire\Reports;
 
-use Livewire\Component;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\LoansExport;
-use App\Models\{Loan, Book, User, BookCopy};
+use App\Models\Book;
+use App\Models\BookCopy;
+use App\Models\Loan;
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
+use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
 
 class Index extends Component
 {
-    public string $from = '', $to = '', $status = '';
+    public string $from = '';
+
+    public string $to = '';
+
+    public string $status = '';
 
     public function mount()
     {
@@ -20,17 +30,21 @@ class Index extends Component
 
     public function exportPdf()
     {
+        Gate::authorize('laporan.export');
         $data = $this->loansData();
         $pdf = Pdf::loadView('reports.loans', [
             'loans' => $data,
             'from' => $this->from,
             'to' => $this->to,
         ])->setPaper('a4', 'landscape');
-        return response()->streamDownload(fn () => print($pdf->output()), 'laporan-peminjaman.pdf');
+
+        return response()->streamDownload(fn () => print ($pdf->output()), 'laporan-peminjaman.pdf');
     }
 
     public function exportExcel()
     {
+        Gate::authorize('laporan.export');
+
         return Excel::download(new LoansExport($this->from, $this->to, $this->status), 'laporan-peminjaman.xlsx');
     }
 
@@ -50,8 +64,8 @@ class Index extends Component
             'totalCopies' => BookCopy::count(),
             'available' => BookCopy::where('status', 'tersedia')->count(),
             'members' => User::role(['Siswa', 'Guru'])->count(),
-            'students' => \App\Models\Student::count(),
-            'teachers' => \App\Models\Teacher::count(),
+            'students' => Student::count(),
+            'teachers' => Teacher::count(),
             'activeLoans' => Loan::where('status', '!=', 'dikembalikan')->count(),
             'totalLoans' => Loan::count(),
             'returned' => Loan::where('status', 'dikembalikan')->count(),

@@ -5,6 +5,7 @@
         subtitle="Kelola profil siswa, data NIS/NISN, kelas, dan akun login perpustakaan."
     >
         <x-slot:actions>
+            @can('siswa.import')
             <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition">
                 <svg class="h-4 w-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
                 <span>Import Excel</span>
@@ -20,6 +21,8 @@
                     <span>Proses Import</span>
                 </button>
             @endif
+            @endcan
+            @can('siswa.create')
             <button
                 type="button"
                 wire:click="create"
@@ -28,6 +31,7 @@
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span>Tambah Siswa</span>
             </button>
+            @endcan
         </x-slot:actions>
     </x-page-header>
 
@@ -66,6 +70,7 @@
                             </td>
                             <td class="px-5 py-3.5 sm:px-6 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-1.5">
+                                    @can('siswa.edit')
                                     <button
                                         type="button"
                                         wire:click="edit({{ $s->id }})"
@@ -73,6 +78,8 @@
                                     >
                                         Edit
                                     </button>
+                                    @endcan
+                                    @can('siswa.delete')
                                     <button
                                         type="button"
                                         wire:click="delete({{ $s->id }})"
@@ -81,6 +88,7 @@
                                     >
                                         Hapus
                                     </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

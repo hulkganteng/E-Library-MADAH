@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Loans\Index;
+use App\Models\BookCopy;
+use App\Models\Loan;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Livewire\Loans\Index;
-use App\Models\{User, BookCopy, Loan, Setting};
 
 class LoanTest extends TestCase
 {
@@ -43,5 +45,20 @@ class LoanTest extends TestCase
 
         $this->assertEquals('tersedia', $copy->fresh()->status);
         $this->assertNotNull(Loan::where('book_copy_id', $copy->id)->latest()->first()->returned_at);
+    }
+
+    public function test_read_only_user_cannot_create_a_loan(): void
+    {
+        $teacher = User::where('email', 'guru@assaadah.sch.id')->firstOrFail();
+        $student = User::where('email', 'siswa@assaadah.sch.id')->firstOrFail();
+        $copy = BookCopy::where('status', 'tersedia')->firstOrFail();
+
+        Livewire::actingAs($teacher)->test(Index::class)
+            ->set('selectedMember', $student->id)
+            ->set('selectedCopy', $copy)
+            ->call('checkout')
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('loans', ['book_copy_id' => $copy->id]);
     }
 }
