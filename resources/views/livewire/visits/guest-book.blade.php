@@ -14,7 +14,23 @@
                     Silakan isi formulir kehadiran di bawah ini untuk mencatat kunjungan Anda di Perpustakaan MA Assadah.
                 </p>
             </div>
-            <div class="flex items-center gap-3 shrink-0">
+            <div class="flex flex-wrap items-center gap-3 shrink-0">
+                <div
+                    x-data="{
+                        time: '',
+                        date: '',
+                        updateTime() {
+                            const now = new Date();
+                            this.date = now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+                            this.time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+                        }
+                    }"
+                    x-init="updateTime(); setInterval(() => updateTime(), 1000)"
+                    class="bg-white/10 backdrop-blur-xs border border-white/10 rounded-xl px-4 py-3 text-center min-w-36 hidden sm:block"
+                >
+                    <p class="text-[11px] font-semibold text-emerald-200 uppercase tracking-wider" x-text="date"></p>
+                    <p class="text-xl sm:text-2xl font-bold font-mono text-white mt-0.5" x-text="time"></p>
+                </div>
                 <div class="bg-white/10 backdrop-blur-xs border border-white/10 rounded-xl px-4 py-3 text-center w-full sm:w-auto min-w-28">
                     <p class="text-[11px] font-semibold text-emerald-200 uppercase tracking-wider">Pengunjung Hari Ini</p>
                     <p class="text-2xl sm:text-3xl font-extrabold text-white mt-0.5">{{ number_format($todayCount) }}</p>

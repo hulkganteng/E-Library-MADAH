@@ -22,7 +22,21 @@
                         <p class="text-[11px] sm:text-xs text-slate-500 font-medium truncate">{{ $kioskSchool ?: 'Madrasah Aliyah Assadah' }}</p>
                     </div>
                 </div>
-                <div>
+                <div class="flex items-center gap-2">
+                    <div
+                        x-data="{
+                            time: '',
+                            updateTime() {
+                                const now = new Date();
+                                this.time = now.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+                            }
+                        }"
+                        x-init="updateTime(); setInterval(() => updateTime(), 1000)"
+                        class="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-3.5 py-1 text-xs font-mono font-semibold text-emerald-900 shadow-2xs"
+                    >
+                        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span x-text="time"></span>
+                    </div>
                     <span class="rounded-full bg-slate-100 border border-slate-200/80 px-3 py-1 sm:px-4 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-slate-700">
                         {{ $books->total() }} Judul
                     </span>

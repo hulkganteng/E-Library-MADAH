@@ -312,6 +312,23 @@
             </div>
 
             <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                {{-- Live System Time --}}
+                <div
+                    x-data="{
+                        time: '',
+                        updateTime() {
+                            const now = new Date();
+                            this.time = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+                        }
+                    }"
+                    x-init="updateTime(); setInterval(() => updateTime(), 1000)"
+                    class="hidden md:flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-1.5 text-xs font-mono font-semibold text-slate-700 shadow-2xs"
+                    title="Waktu Sistem Terkini"
+                >
+                    <svg class="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span x-text="time"></span>
+                </div>
+
                 @if($isAuth)
                     <a
                         href="{{ route('notifications.index') }}"
