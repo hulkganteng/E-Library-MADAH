@@ -38,8 +38,11 @@
                 <tbody class="divide-y divide-slate-100 text-slate-700">
                     @forelse($items as $item)
                         <tr class="hover:bg-slate-50/70 transition-colors">
-                            <td class="px-5 py-3.5 sm:px-6 font-bold text-slate-900 text-xs sm:text-sm">
-                                {{ $item->{$nameKey} }}
+                            <td class="px-5 py-3.5 sm:px-6">
+                                <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $item->{$nameKey} }}</p>
+                                @if($secondaryProp && $item->{$secondaryProp})
+                                    <p class="sm:hidden text-[11px] text-slate-500 mt-0.5">{{ $item->{$secondaryProp} }}</p>
+                                @endif
                             </td>
                             <td class="hidden px-4 py-3.5 sm:table-cell text-xs text-slate-500">
                                 {{ $item->{$secondaryProp} ?: '-' }}

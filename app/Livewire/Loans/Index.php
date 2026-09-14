@@ -29,6 +29,10 @@ class Index extends Component
 
     public $selectedCopy = null;
 
+    public $borrowerName = '';
+
+    public $borrowerClass = '';
+
     // Return
     public $returnCode = '';
 
@@ -41,6 +45,18 @@ class Index extends Component
 
     public $newDueAt;
 
+    private function getStaticUser()
+    {
+        return User::firstOrCreate(
+            ['email' => 'peminjam@assaadah.sch.id'],
+            [
+                'name' => 'Peminjam',
+                'password' => bcrypt('password'),
+                'is_active' => true,
+            ]
+        );
+    }
+
     public function mount()
     {
         $this->dueDays = (int) Setting::get('loan_duration_days', 7);
@@ -50,11 +66,11 @@ class Index extends Component
     {
         abort_unless(in_array($tab, ['list', 'checkout', 'return'], true), 404);
 
-        if ($tab === 'checkout') {
+        if ($tab === 'checkout' && auth()->check()) {
             Gate::authorize('peminjaman.create');
         }
 
-        if ($tab === 'return') {
+        if ($tab === 'return' && auth()->check()) {
             Gate::authorize('peminjaman.edit');
         }
 
@@ -79,9 +95,15 @@ class Index extends Component
 
     public function scanCopy()
     {
-        Gate::authorize('peminjaman.create');
+        if (auth()->check()) {
+            Gate::authorize('peminjaman.create');
+        }
         $this->validate(['copyCode' => 'required']);
-        $copy = BookCopy::with('book')->where('inventory_code', $this->copyCode)->orWhere('qr_code', $this->copyCode)->first();
+        $code = trim($this->copyCode);
+        if (filter_var($code, FILTER_VALIDATE_URL)) {
+            $code = basename(parse_url($code, PHP_URL_PATH));
+        }
+        $copy = BookCopy::with('book')->where('inventory_code', $code)->orWhere('qr_code', $code)->first();
         if (! $copy) {
             $this->dispatch('notify', ['message' => 'Kode eksemplar tidak ditemukan.', 'type' => 'error']);
 
@@ -97,35 +119,46 @@ class Index extends Component
 
     public function checkout()
     {
-        Gate::authorize('peminjaman.create');
-        if (! $this->selectedMember || ! $this->selectedCopy) {
-            $this->dispatch('notify', ['message' => 'Pilih anggota dan eksemplar.', 'type' => 'error']);
+        if (auth()->check()) {
+            Gate::authorize('peminjaman.create');
+        }
+
+        if (! $this->selectedCopy) {
+            $this->dispatch('notify', ['message' => 'Scan atau cari eksemplar buku terlebih dahulu.', 'type' => 'error']);
 
             return;
         }
-        $member = User::find($this->selectedMember);
+
+        $member = $this->getStaticUser();
         $copy = $this->selectedCopy;
 
         $max = (int) Setting::get('max_borrow', 3);
         $active = $member->loans()->where('status', '!=', 'dikembalikan')->count();
         if ($active >= $max) {
-            $this->dispatch('notify', ['message' => "Anggota sudah meminjam $max buku.", 'type' => 'error']);
+            $this->dispatch('notify', ['message' => "Batas peminjaman ($max buku) tercapai.", 'type' => 'error']);
 
             return;
         }
 
+        $this->validate([
+            'borrowerName' => 'required|string|max:100',
+            'borrowerClass' => 'required|string|max:50',
+        ]);
+
         Loan::create([
             'user_id' => $member->id,
             'book_copy_id' => $copy->id,
+            'borrower_name' => trim($this->borrowerName),
+            'borrower_class' => trim($this->borrowerClass),
             'borrowed_at' => now(),
             'due_at' => now()->addDays($this->dueDays),
             'status' => 'dipinjam',
-            'handled_by' => auth()->id(),
+            'handled_by' => auth()->id() ?? $member->id,
         ]);
         $copy->update(['status' => 'dipinjam']);
         $copy->book()->increment('borrow_count');
 
-        $this->reset('memberQuery', 'copyCode', 'selectedMember', 'selectedCopy');
+        $this->reset('copyCode', 'selectedCopy', 'borrowerName', 'borrowerClass');
         $this->dispatch('notify', ['message' => 'Peminjaman berhasil dibuat.']);
     }
 
@@ -137,9 +170,15 @@ class Index extends Component
 
     public function scanReturn()
     {
-        Gate::authorize('peminjaman.edit');
+        if (auth()->check()) {
+            Gate::authorize('peminjaman.edit');
+        }
         $this->validate(['returnCode' => 'required']);
-        $copy = BookCopy::with('book')->where('inventory_code', $this->returnCode)->orWhere('qr_code', $this->returnCode)->first();
+        $code = trim($this->returnCode);
+        if (filter_var($code, FILTER_VALIDATE_URL)) {
+            $code = basename(parse_url($code, PHP_URL_PATH));
+        }
+        $copy = BookCopy::with('book')->where('inventory_code', $code)->orWhere('qr_code', $code)->first();
         if (! $copy) {
             $this->dispatch('notify', ['message' => 'Kode eksemplar tidak ditemukan.', 'type' => 'error']);
 
@@ -158,7 +197,9 @@ class Index extends Component
 
     public function processReturn()
     {
-        Gate::authorize('peminjaman.edit');
+        if (auth()->check()) {
+            Gate::authorize('peminjaman.edit');
+        }
         $loan = $this->returnInfo;
         $loan->update([
             'returned_at' => now(),
@@ -172,7 +213,9 @@ class Index extends Component
 
     public function extendLoan(Loan $loan)
     {
-        Gate::authorize('peminjaman.edit');
+        if (auth()->check()) {
+            Gate::authorize('peminjaman.edit');
+        }
         if ($loan->status === 'dikembalikan' || $loan->isOverdue()) {
             $this->dispatch('notify', ['message' => 'Buku tidak dapat diperpanjang.', 'type' => 'error']);
 
@@ -182,15 +225,58 @@ class Index extends Component
         $this->dispatch('notify', ['message' => 'Masa pinjam diperpanjang 7 hari.']);
     }
 
+    public function approveLoan(Loan $loan)
+    {
+        if (auth()->check()) {
+            Gate::authorize('peminjaman.edit');
+        }
+        if ($loan->status !== 'menunggu') {
+            $this->dispatch('notify', ['message' => 'Status pengajuan sudah tidak berlaku.', 'type' => 'error']);
+
+            return;
+        }
+
+        $copy = $loan->bookCopy;
+        if ($copy->status !== 'tersedia') {
+            $this->dispatch('notify', ['message' => 'Eksemplar buku sedang tidak tersedia.', 'type' => 'error']);
+
+            return;
+        }
+
+        $loan->update([
+            'status' => 'dipinjam',
+            'borrowed_at' => now(),
+            'due_at' => now()->addDays((int) Setting::get('loan_duration_days', 7)),
+            'handled_by' => auth()->id(),
+        ]);
+        $copy->update(['status' => 'dipinjam']);
+        $copy->book()->increment('borrow_count');
+
+        $this->dispatch('notify', ['message' => 'Pengajuan peminjaman berhasil disetujui.']);
+    }
+
+    public function rejectLoan(Loan $loan)
+    {
+        if (auth()->check()) {
+            Gate::authorize('peminjaman.edit');
+        }
+        if ($loan->status !== 'menunggu') {
+            $this->dispatch('notify', ['message' => 'Status pengajuan sudah tidak berlaku.', 'type' => 'error']);
+
+            return;
+        }
+
+        $loan->update([
+            'status' => 'ditolak',
+            'handled_by' => auth()->id(),
+        ]);
+
+        $this->dispatch('notify', ['message' => 'Pengajuan peminjaman ditolak.']);
+    }
+
     public function render()
     {
-        $members = [];
-        if ($this->memberQuery) {
-            $members = User::role(['Siswa', 'Guru'])
-                ->where('name', 'like', "%{$this->memberQuery}%")
-                ->orWhere('email', 'like', "%{$this->memberQuery}%")
-                ->limit(8)->get();
-        }
+        $pendingCount = Loan::where('status', 'menunggu')->count();
 
         $loans = Loan::with('user', 'bookCopy.book')
             ->when($this->search, fn ($q) => $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$this->search}%"))->orWhereHas('bookCopy', fn ($b) => $b->whereHas('book', fn ($bk) => $bk->where('title', 'like', "%{$this->search}%"))))
@@ -198,8 +284,8 @@ class Index extends Component
             ->paginate(10);
 
         return view('livewire.loans.index', [
-            'members' => $members,
             'loans' => $loans,
+            'pendingCount' => $pendingCount,
         ]);
     }
 }

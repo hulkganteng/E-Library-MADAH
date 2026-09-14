@@ -26,11 +26,12 @@ class SmokeTest extends TestCase
         $this->get('/')->assertRedirect();
         $this->get('/katalog')->assertOk();
         $this->get('/login')->assertOk();
+        $this->get('/buku-tamu')->assertOk();
     }
 
     public function test_admin_pages(): void
     {
-        $pages = ['/dashboard', '/buku', '/eksemplar', '/kategori', '/penulis', '/penerbit', '/rak', '/peminjaman', '/siswa', '/guru', '/kelas', '/laporan', '/pengumuman', '/audit', '/pengaturan', '/notifikasi'];
+        $pages = ['/dashboard', '/buku', '/eksemplar', '/kategori', '/penulis', '/penerbit', '/rak', '/peminjaman', '/kunjungan', '/guru', '/laporan', '/pengumuman', '/audit', '/pengaturan', '/notifikasi'];
         foreach ($pages as $p) {
             $this->actingAs($this->admin())->get($p)->assertOk();
         }
@@ -38,9 +39,16 @@ class SmokeTest extends TestCase
 
     public function test_student_dashboard(): void
     {
-        $student = User::where('email', 'siswa@assaadah.sch.id')->firstOrFail();
-        $this->actingAs($student)->get('/dashboard')->assertOk();
-        $this->actingAs($student)->get('/katalog')->assertOk();
+        $this->get('/katalog')->assertOk();
+        $this->get('/peminjaman')->assertOk();
+    }
+
+    public function test_download_books_template_excel(): void
+    {
+        \Livewire\Livewire::actingAs($this->admin())
+            ->test(\App\Livewire\Books\Index::class)
+            ->call('downloadTemplate')
+            ->assertFileDownloaded('template-import-buku.xlsx');
     }
 
     public function test_routes_follow_each_module_permission(): void

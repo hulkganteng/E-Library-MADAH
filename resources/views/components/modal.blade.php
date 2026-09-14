@@ -1,6 +1,6 @@
-@props(['show' => false, 'title' => '', 'maxWidth' => 'max-w-lg'])
+@props(['show' => false, 'title' => '', 'maxWidth' => 'max-w-lg', 'model' => 'showModal'])
 <div
-    x-data="{ open: @entangle('showModal') }"
+    x-data="{ open: @entangle($model) }"
     x-cloak
     x-show="open"
     x-on:keydown.escape.window="open = false"
@@ -28,7 +28,7 @@
         x-transition:leave="ease-in duration-150"
         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-        class="relative z-10 max-h-[90vh] w-full {{ $maxWidth }} overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-dropdown"
+        class="relative z-10 max-h-[92vh] w-full {{ $maxWidth }} overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-dropdown"
     >
         <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
             <h3 class="text-lg font-bold text-slate-900">{{ $title }}</h3>

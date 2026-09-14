@@ -44,7 +44,7 @@
 
     {{-- Sidebar --}}
     <aside
-        class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-brand-950 text-slate-100 transition-transform duration-200 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:translate-x-0 shrink-0 border-r border-brand-900/60"
+        class="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-brand-950 text-slate-100 transition-transform duration-200 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:translate-x-0 shrink-0 border-r border-brand-900/60"
         :class="open ? 'translate-x-0' : '-translate-x-full'"
     >
         {{-- Logo Header --}}
@@ -100,6 +100,12 @@
                             <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.875c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125z" /></svg>
                         </x-slot:icon>
                         Monitor Display
+                    </x-nav-link>
+                    <x-nav-link :href="route('visits.guest-book')" :active="request()->routeIs('visits.guest-book')">
+                        <x-slot:icon>
+                            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                        </x-slot:icon>
+                        Buku Tamu
                     </x-nav-link>
                     <x-nav-link :href="route('login')">
                         <x-slot:icon>
@@ -183,31 +189,41 @@
                     </div>
                 @endif
 
-                {{-- Layanan Sirkulasi --}}
-                @if(auth()->user()->can('peminjaman.view'))
+                {{-- Layanan Sirkulasi & Kunjungan --}}
+                @if(!$user || $user->canAny(['peminjaman.view', 'kunjungan.view']))
                     <div class="space-y-1">
                         <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/80">Layanan</p>
+                        @if(!$user || $user->can('peminjaman.view'))
                         <x-nav-link :href="route('loans.index')" :active="request()->routeIs('loans.*')">
                             <x-slot:icon>
                                 <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
                             </x-slot:icon>
                             Peminjaman & Sirkulasi
                         </x-nav-link>
+                        @endif
+                        @can('kunjungan.view')
+                        <x-nav-link :href="route('visits.index')" :active="request()->routeIs('visits.index')">
+                            <x-slot:icon>
+                                <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                            </x-slot:icon>
+                            Kunjungan Tamu
+                        </x-nav-link>
+                        @endcan
                     </div>
                 @endif
 
-                {{-- Anggota --}}
-                @if(auth()->user()->can('siswa.view') || auth()->user()->can('guru.view'))
+                {{-- Keanggotaan --}}
+                @if($user && ($user->can('guru.view') || $user->hasRole('Admin')))
                     <div class="space-y-1">
                         <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/80">Keanggotaan</p>
-                        @can('siswa.view')
-                            <x-nav-link :href="route('students.index')" :active="request()->routeIs('students.*')">
+                        @if($user->hasRole('Admin'))
+                            <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                                 <x-slot:icon>
-                                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" /></svg>
+                                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
                                 </x-slot:icon>
-                                Data Siswa
+                                Manajemen Pengguna
                             </x-nav-link>
-                        @endcan
+                        @endif
                         @can('guru.view')
                             <x-nav-link :href="route('teachers.index')" :active="request()->routeIs('teachers.*')">
                                 <x-slot:icon>
@@ -216,19 +232,11 @@
                                 Data Guru
                             </x-nav-link>
                         @endcan
-                        @can('kelas.view')
-                            <x-nav-link :href="route('classes.index')" :active="request()->routeIs('classes.*')">
-                                <x-slot:icon>
-                                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-6A1.125 1.125 0 012.25 9.375v-2.25zM2.25 14.625c0-.621.504-1.125 1.125-1.125h6c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 01-1.125-1.125v-2.25zM13.5 7.125c0-.621.504-1.125 1.125-1.125h6c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-6A1.125 1.125 0 0113.5 9.375v-2.25zM13.5 14.625c0-.621.504-1.125 1.125-1.125h6c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 01-1.125-1.125v-2.25z" /></svg>
-                                </x-slot:icon>
-                                Data Kelas
-                            </x-nav-link>
-                        @endcan
                     </div>
                 @endif
 
                 {{-- Administrasi & Laporan --}}
-                @if($user->canAny(['laporan.view', 'pengumuman.view', 'audit.view', 'pengaturan.view']))
+                @if($user && $user->canAny(['laporan.view', 'pengumuman.view', 'audit.view', 'pengaturan.view']))
                     <div class="space-y-1">
                         <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-emerald-400/80">Administrasi</p>
                         @can('laporan.view')
@@ -270,12 +278,8 @@
         </nav>
 
         {{-- Sidebar Footer: User profile / Guest info --}}
-        <div class="shrink-0 border-t border-brand-900/80 p-3">
-            @if(!$isAuth)
-                <div class="rounded-lg bg-brand-900/50 p-3 text-center">
-                    <p class="text-xs font-medium text-emerald-200/80">Silakan login untuk meminjam buku & fitur lengkap.</p>
-                </div>
-            @else
+        @if($isAuth)
+            <div class="shrink-0 border-t border-brand-900/80 p-3">
                 <div class="flex items-center gap-3 rounded-lg bg-brand-900/40 p-2.5">
                     <div class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-800 text-xs font-bold text-emerald-100 uppercase border border-emerald-700/60">
                         {{ str($user->name)->substr(0, 1) }}
@@ -285,29 +289,29 @@
                         <p class="truncate text-[11px] font-medium text-emerald-300/75 capitalize">{{ $user->roles->first()->name ?? 'Pengguna' }}</p>
                     </div>
                 </div>
-            @endif
-        </div>
+            </div>
+        @endif
     </aside>
 
     {{-- Main Canvas --}}
     <div class="flex min-w-0 flex-1 flex-col">
         {{-- Sticky Top Header --}}
-        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 lg:px-8 backdrop-blur-md">
-            <div class="flex items-center gap-3 min-w-0">
+        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-3.5 sm:px-6 lg:px-8 backdrop-blur-md">
+            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <button
                     type="button"
                     @click="open = true"
-                    class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 lg:hidden transition"
+                    class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 lg:hidden transition"
                     aria-label="Buka Menu"
                 >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                 </button>
                 <div class="min-w-0">
-                    <span class="truncate text-sm font-semibold text-slate-800 sm:text-base">{{ $title ?? 'Perpustakaan' }}</span>
+                    <span class="truncate text-sm font-semibold text-slate-800 sm:text-base max-w-[200px] sm:max-w-none block">{{ $title ?? 'Perpustakaan' }}</span>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
                 @if($isAuth)
                     <a
                         href="{{ route('notifications.index') }}"
@@ -341,7 +345,7 @@
         </header>
 
         {{-- Page Body --}}
-        <main class="flex-1 p-4 sm:p-6 lg:p-8">
+        <main class="flex-1 p-3.5 sm:p-6 lg:p-8">
             <div class="mx-auto max-w-7xl">
                 {{ $slot }}
             </div>

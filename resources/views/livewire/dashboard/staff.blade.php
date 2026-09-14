@@ -14,7 +14,7 @@
     </x-page-header>
 
     {{-- Top Key Metrics --}}
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <x-stat-card
             label="Total Judul Buku"
             :value="$totalBooks"
@@ -87,10 +87,11 @@
                         <tbody class="divide-y divide-slate-100 text-slate-700">
                             @forelse($recentLoans as $loan)
                                 <tr class="hover:bg-slate-50/70 transition-colors">
-                                    <td class="px-5 py-3.5 sm:px-6">
-                                        <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $loan->user->name }}</p>
-                                        <p class="text-[11px] text-slate-400">{{ $loan->user->roles->first()->name ?? 'Anggota' }}</p>
-                                    </td>
+                                     <td class="px-5 py-3.5 sm:px-6">
+                                         @php($bName = $loan->notes ? str_replace('Peminjam: ', '', $loan->notes) : ($loan->user->name === 'Peminjam Statis (Komputer Perpustakaan)' ? 'Nama Peminjam' : $loan->user->name))
+                                         <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $bName }}</p>
+                                         <p class="text-[11px] text-slate-400">Peminjam</p>
+                                     </td>
                                     <td class="px-4 py-3.5">
                                         <p class="font-medium text-slate-800 line-clamp-1 text-xs sm:text-sm">{{ $loan->bookCopy->book->title }}</p>
                                         <p class="font-mono text-[11px] text-slate-400">{{ $loan->bookCopy->inventory_code }}</p>

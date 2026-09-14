@@ -22,6 +22,13 @@ class Login extends Component
         if (auth()->attempt(['email' => $this->email, 'password' => $this->password], request()->has('remember'))) {
             session()->regenerate();
             $user = auth()->user();
+            if ($user->hasRole('Siswa')) {
+                auth()->logout();
+                session()->invalidate();
+                session()->regenerateToken();
+                $this->addError('email', 'Siswa tidak memerlukan login. Peminjaman buku dilakukan via Komputer Perpustakaan.');
+                return;
+            }
             if (!$user->is_active) {
                 auth()->logout();
                 session()->invalidate();

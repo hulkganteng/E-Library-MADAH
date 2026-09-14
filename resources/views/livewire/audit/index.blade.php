@@ -40,29 +40,29 @@
                                 {{ $log->created_at->format('d M Y, H:i:s') }}
                             </td>
                             <td class="px-4 py-3.5 whitespace-nowrap">
-                                <p class="font-bold text-slate-900 text-xs">{{ $log->user?->name ?? 'Sistem Otomatis' }}</p>
-                                <p class="text-[11px] text-slate-400">{{ $log->user?->roles->first()->name ?? '-' }}</p>
+                                <p class="font-bold text-slate-900 text-xs">{{ $log->causer?->name ?? 'Sistem Otomatis' }}</p>
+                                <p class="text-[11px] text-slate-400">{{ $log->causer?->roles->first()->name ?? '-' }}</p>
                             </td>
                             <td class="px-4 py-3.5 whitespace-nowrap">
                                 <x-badge
-                                    color="{{ match($log->action) {
-                                        'create' => 'green',
-                                        'update' => 'amber',
-                                        'delete' => 'red',
+                                    color="{{ match($log->event ?? $log->description) {
+                                        'created', 'create' => 'green',
+                                        'updated', 'update' => 'amber',
+                                        'deleted', 'delete' => 'red',
                                         'login' => 'blue',
                                         default => 'slate'
                                     } }}"
                                     size="sm"
                                     dot
                                 >
-                                    {{ strtoupper($log->action) }}
+                                    {{ strtoupper($log->event ?? $log->description ?? 'LOG') }}
                                 </x-badge>
                             </td>
                             <td class="hidden px-4 py-3.5 md:table-cell whitespace-nowrap text-xs font-mono text-slate-600">
-                                {{ class_basename($log->model_type) }} #{{ $log->model_id }}
+                                {{ class_basename($log->subject_type) }} #{{ $log->subject_id }}
                             </td>
                             <td class="hidden px-4 py-3.5 lg:table-cell whitespace-nowrap text-xs font-mono text-slate-400">
-                                {{ $log->ip_address }}
+                                {{ $log->properties['ip'] ?? '-' }}
                             </td>
                             <td class="px-5 py-3.5 sm:px-6 text-right whitespace-nowrap">
                                 <button
@@ -97,14 +97,14 @@
         @if($selectedLog)
             <div class="space-y-3">
                 <div class="rounded-lg bg-slate-50 p-3 text-xs space-y-1 border border-slate-200/80">
-                    <p><span class="font-semibold text-slate-700">Pelaksana:</span> {{ $selectedLog->user?->name ?? 'Sistem' }} ({{ $selectedLog->ip_address }})</p>
-                    <p><span class="font-semibold text-slate-700">Aksi:</span> {{ strtoupper($selectedLog->action) }} pada {{ class_basename($selectedLog->model_type) }} #{{ $selectedLog->model_id }}</p>
+                    <p><span class="font-semibold text-slate-700">Pelaksana:</span> {{ $selectedLog->causer?->name ?? 'Sistem' }}</p>
+                    <p><span class="font-semibold text-slate-700">Aksi:</span> {{ strtoupper($selectedLog->event ?? $selectedLog->description) }} pada {{ class_basename($selectedLog->subject_type) }} #{{ $selectedLog->subject_id }}</p>
                     <p><span class="font-semibold text-slate-700">Waktu:</span> {{ $selectedLog->created_at->format('d M Y, H:i:s') }}</p>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">Perubahan Nilai Kolom</label>
-                    <pre class="max-h-80 overflow-auto rounded-lg bg-slate-900 p-4 font-mono text-xs text-emerald-300 leading-relaxed">{{ json_encode($selectedLog->changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                    <pre class="max-h-80 overflow-auto rounded-lg bg-slate-900 p-4 font-mono text-xs text-emerald-300 leading-relaxed">{{ json_encode($selectedLog->properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                 </div>
 
                 <div class="flex justify-end pt-3 border-t border-slate-100">

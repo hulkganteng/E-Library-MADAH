@@ -43,7 +43,10 @@
                         <tr class="hover:bg-slate-50/70 transition-colors">
                             <td class="px-5 py-3.5 sm:px-6">
                                 <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $t->user->name }}</p>
-                                <p class="text-[11px] text-slate-400 mt-0.5">{{ $t->user->email }}</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5 truncate max-w-xs">{{ $t->user->email }}</p>
+                                <p class="sm:hidden text-[11px] text-emerald-700 font-medium mt-0.5">
+                                    {{ $t->subject ?: 'Mata Pelajaran -' }} {{ $t->nip ? '• NIP: ' . $t->nip : '' }}
+                                </p>
                             </td>
                             <td class="hidden px-4 py-3.5 sm:table-cell text-xs font-mono text-slate-600">
                                 {{ $t->nip ?: '-' }}

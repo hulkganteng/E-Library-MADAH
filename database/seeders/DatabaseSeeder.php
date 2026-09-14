@@ -65,6 +65,16 @@ class DatabaseSeeder extends Seeder
             'gender' => 'L',
             'birth_date' => '2008-04-15',
         ]);
+
+        $peminjamStatis = User::firstOrCreate(
+            ['email' => 'peminjam@assaadah.sch.id'],
+            [
+                'name' => 'Peminjam',
+                'password' => bcrypt('password'),
+                'is_active' => true,
+            ]
+        );
+        $peminjamStatis->assignRole('Siswa');
     }
 
     private function seedMasterData(): void

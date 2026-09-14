@@ -15,7 +15,7 @@ return new class extends Migration
             $table->date('borrowed_at');
             $table->date('due_at');
             $table->date('returned_at')->nullable();
-            $table->enum('status', ['dipinjam', 'dikembalikan', 'terlambat'])->default('dipinjam')->index();
+            $table->string('status')->default('dipinjam')->index();
             $table->decimal('fine_amount', 12, 2)->default(0);
             $table->string('notes')->nullable();
             $table->unsignedBigInteger('handled_by')->nullable();

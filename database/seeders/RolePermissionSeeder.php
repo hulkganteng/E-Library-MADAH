@@ -24,6 +24,8 @@ class RolePermissionSeeder extends Seeder
             'guru' => ['view', 'create', 'edit', 'delete'],
             'kelas' => ['view', 'create', 'edit', 'delete'],
             'pustakawan' => ['view', 'create', 'edit', 'delete'],
+            'pengguna' => ['view', 'create', 'edit', 'delete'],
+            'kunjungan' => ['view', 'create', 'edit', 'delete', 'export'],
             'katalog' => ['view'],
             'pengumuman' => ['view', 'create', 'edit', 'delete'],
             'laporan' => ['view', 'export'],
@@ -49,7 +51,9 @@ class RolePermissionSeeder extends Seeder
             'eksemplar.view', 'eksemplar.create', 'eksemplar.edit',
             'peminjaman.view', 'peminjaman.create', 'peminjaman.edit',
             'siswa.view', 'siswa.import', 'katalog.view',
+            'kunjungan.view', 'kunjungan.create', 'kunjungan.edit', 'kunjungan.delete', 'kunjungan.export',
             'pengumuman.view', 'laporan.view',
+            'guru.view',
         ]);
 
         $guru = Role::firstOrCreate(['name' => 'Guru']);

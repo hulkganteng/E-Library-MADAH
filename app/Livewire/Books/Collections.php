@@ -4,6 +4,7 @@ namespace App\Livewire\Books;
 
 use App\Models\Book;
 use App\Models\BookCopy;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
@@ -54,6 +55,28 @@ class Collections extends Component
         Gate::authorize('eksemplar.delete');
         $copy->delete();
         $this->dispatch('notify', ['message' => 'Eksemplar dihapus.']);
+    }
+
+    public function exportPdf()
+    {
+        Gate::authorize('eksemplar.view');
+
+        $copies = BookCopy::with('book.shelf')
+            ->when($this->book_id, fn ($q) => $q->where('book_id', $this->book_id))
+            ->orderBy('inventory_code')
+            ->get();
+
+        if ($copies->isEmpty()) {
+            $this->dispatch('notify', ['message' => 'Tidak ada eksemplar untuk dicetak.', 'type' => 'error']);
+
+            return;
+        }
+
+        $pdf = Pdf::loadView('pdf.qr-labels', [
+            'copies' => $copies,
+        ])->setPaper('a4', 'portrait');
+
+        return response()->streamDownload(fn () => print ($pdf->output()), 'label-qr-buku.pdf');
     }
 
     public function render()

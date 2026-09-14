@@ -4,27 +4,27 @@
     @php($kioskSchool = \App\Models\Setting::get('school_name', 'Madrasah Aliyah Assadah'))
     @php($kioskLib = \App\Models\Setting::get('library_name', 'Katalog Kiosk Perpustakaan'))
 
-    <header class="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 px-6 py-5 backdrop-blur-md sm:px-10 shadow-2xs">
+    <header class="sticky top-0 z-20 border-b border-slate-200/90 bg-white/95 px-4 py-4 backdrop-blur-md sm:px-10 sm:py-5 shadow-2xs">
         <div class="mx-auto max-w-7xl">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-3.5">
-                    <div class="grid h-12 w-12 place-items-center rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-serif font-bold text-xl shadow-2xs overflow-hidden p-1">
+            <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+                <div class="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                    <div class="grid h-10 w-10 sm:h-12 sm:w-12 shrink-0 place-items-center rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-serif font-bold text-lg sm:text-xl shadow-2xs overflow-hidden p-1">
                         @if($kioskLogo)
                             <img src="{{ asset('storage/' . $kioskLogo) }}" class="h-full w-full object-contain" alt="Logo">
                         @else
-                            <div class="grid h-full w-full place-items-center rounded-lg bg-emerald-700 text-white font-serif font-bold text-xl">
+                            <div class="grid h-full w-full place-items-center rounded-lg bg-emerald-700 text-white font-serif font-bold text-lg sm:text-xl">
                                 م
                             </div>
                         @endif
                     </div>
-                    <div>
-                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 font-serif">{{ $kioskLib ?: 'Katalog Kiosk Perpustakaan' }}</h1>
-                        <p class="text-xs text-slate-500 font-medium">{{ $kioskSchool ?: 'Madrasah Aliyah Assadah' }}</p>
+                    <div class="min-w-0">
+                        <h1 class="text-base sm:text-2xl font-extrabold tracking-tight text-slate-900 font-serif truncate">{{ $kioskLib ?: 'Katalog Kiosk Perpustakaan' }}</h1>
+                        <p class="text-[11px] sm:text-xs text-slate-500 font-medium truncate">{{ $kioskSchool ?: 'Madrasah Aliyah Assadah' }}</p>
                     </div>
                 </div>
                 <div>
-                    <span class="rounded-full bg-slate-100 border border-slate-200/80 px-4 py-1.5 text-xs font-semibold text-slate-700">
-                        {{ $books->total() }} Judul Koleksi
+                    <span class="rounded-full bg-slate-100 border border-slate-200/80 px-3 py-1 sm:px-4 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-slate-700">
+                        {{ $books->total() }} Judul
                     </span>
                 </div>
             </div>
@@ -70,11 +70,11 @@
             </div>
 
             {{-- Categories Filter Pills --}}
-            <div class="mt-3.5 flex flex-wrap gap-1.5">
+            <div class="mt-3.5 flex overflow-x-auto pb-2 sm:pb-0 sm:flex-wrap gap-1.5 no-scrollbar">
                 <button
                     type="button"
                     wire:click="$set('category', null)"
-                    class="rounded-full px-3.5 py-1 text-xs font-semibold transition cursor-pointer {{ $category === null ? 'bg-emerald-700 text-white shadow-2xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200' }}"
+                    class="rounded-full px-3.5 py-1 text-xs font-semibold transition cursor-pointer whitespace-nowrap {{ $category === null ? 'bg-emerald-700 text-white shadow-2xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200' }}"
                 >
                     Semua Kategori
                 </button>
@@ -82,7 +82,7 @@
                     <button
                         type="button"
                         wire:click="$set('category', {{ $c->id }})"
-                        class="rounded-full px-3.5 py-1 text-xs font-semibold transition cursor-pointer {{ $category === $c->id ? 'bg-emerald-700 text-white shadow-2xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200' }}"
+                        class="rounded-full px-3.5 py-1 text-xs font-semibold transition cursor-pointer whitespace-nowrap {{ $category === $c->id ? 'bg-emerald-700 text-white shadow-2xs' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200' }}"
                     >
                         {{ $c->name }}
                     </button>
@@ -92,7 +92,7 @@
     </header>
 
     {{-- Book Grid --}}
-    <main class="mx-auto max-w-7xl px-6 py-8 sm:px-10">
+    <main class="mx-auto max-w-7xl px-4 py-6 sm:px-10 sm:py-8">
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             @forelse($books as $book)
                 <button
