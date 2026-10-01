@@ -81,7 +81,15 @@
                         <tr class="hover:bg-slate-50/70 transition-colors">
                             <td class="px-5 py-3.5 sm:px-6">
                                 <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $book->title }}</p>
-                                <p class="font-mono text-[11px] text-slate-400 mt-0.5">{{ $book->isbn ?: 'Tanpa ISBN' }}</p>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span class="font-mono text-[11px] text-slate-400">{{ $book->isbn ?: 'Tanpa ISBN' }}</span>
+                                    @if($book->is_textbook)
+                                        <x-badge color="amber" size="xs">Kitab Pelajaran</x-badge>
+                                    @endif
+                                    @if($book->is_repository)
+                                        <x-badge color="purple" size="xs">Repository</x-badge>
+                                    @endif
+                                </div>
                                 <p class="sm:hidden text-[11px] text-emerald-700 font-medium mt-0.5">
                                     {{ $book->category?->name ?? 'Umum' }}
                                     @if($book->authors->isNotEmpty())
@@ -162,6 +170,9 @@
                             <span>Isi Otomatis dari Internet</span>
                         </span>
                         <div class="flex items-center gap-2 text-[11px] text-slate-600">
+                            <label class="inline-flex items-center gap-1 cursor-pointer">
+                                <input type="radio" wire:model.live="apiSource" value="sibi" class="text-indigo-600"> SIBI Kemendikdasmen
+                            </label>
                             <label class="inline-flex items-center gap-1 cursor-pointer">
                                 <input type="radio" wire:model.live="apiSource" value="openlibrary" class="text-indigo-600"> Open Library
                             </label>
@@ -392,10 +403,14 @@
                             <x-textarea wire:model="description" label="Sinopsis / Deskripsi Buku" rows="2" placeholder="Ringkasan isi buku..." />
                         </div>
 
-                        <div class="rounded-lg bg-slate-50 p-2.5 border border-slate-200">
+                        <div class="rounded-lg bg-slate-50 p-2.5 border border-slate-200 space-y-2">
                             <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
                                 <input type="checkbox" wire:model="is_repository" class="rounded border-slate-300 text-emerald-700 focus:ring-emerald-500">
                                 <span>Tandai sebagai Karya Repository Mandiri (Karya Siswa / Guru MA Assadah)</span>
+                            </label>
+                            <label class="inline-flex items-center gap-2 text-xs font-semibold text-amber-900 cursor-pointer">
+                                <input type="checkbox" wire:model="is_textbook" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                <span>Tandai sebagai Kitab / Buku Pelajaran Tahunan (Paket Siswa)</span>
                             </label>
                         </div>
                     </div>
@@ -432,17 +447,24 @@
             <div class="flex flex-wrap items-center gap-2 p-1 rounded-lg bg-slate-100 text-xs font-semibold text-slate-700">
                 <button
                     type="button"
+                    wire:click="$set('apiSource', 'sibi')"
+                    class="flex-1 py-1.5 px-3 rounded-md transition text-center cursor-pointer {{ $apiSource === 'sibi' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900' }}"
+                >
+                    SIBI Kemendikdasmen (Resmi)
+                </button>
+                <button
+                    type="button"
                     wire:click="$set('apiSource', 'openlibrary')"
                     class="flex-1 py-1.5 px-3 rounded-md transition text-center cursor-pointer {{ $apiSource === 'openlibrary' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900' }}"
                 >
-                    Open Library API (openlibrary.org)
+                    Open Library API
                 </button>
                 <button
                     type="button"
                     wire:click="$set('apiSource', 'google')"
                     class="flex-1 py-1.5 px-3 rounded-md transition text-center cursor-pointer {{ $apiSource === 'google' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900' }}"
                 >
-                    Google Books API (googleapis.com)
+                    Google Books API
                 </button>
             </div>
 
@@ -555,7 +577,7 @@
             {{-- Loading State --}}
             <div wire:loading wire:target="searchApi,setQueryAndSearch" class="w-full py-8 text-center">
                 <div class="inline-block h-7 w-7 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"></div>
-                <p class="mt-2 text-xs font-medium text-slate-600">Menghubungi {{ $apiSource === 'google' ? 'Google Books API' : 'Open Library API' }}...</p>
+                <p class="mt-2 text-xs font-medium text-slate-600">Menghubungi {{ $apiSource === 'google' ? 'Google Books API' : ($apiSource === 'sibi' ? 'SIBI Kemendikdasmen API' : 'Open Library API') }}...</p>
             </div>
 
             {{-- Hasil Pencarian Buku --}}

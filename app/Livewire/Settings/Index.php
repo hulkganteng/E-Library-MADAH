@@ -5,6 +5,7 @@ namespace App\Livewire\Settings;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -26,6 +27,8 @@ class Index extends Component
     public $currentLogo = null;
 
     public $currentFavicon = null;
+
+    public $restoreFile = null;
 
     public function mount()
     {
@@ -106,42 +109,152 @@ class Index extends Component
     public function backup()
     {
         Gate::authorize('backup.create');
+
+        $throttleKey = 'db-backup:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->dispatch('notify', [
+                'message' => "Terlalu sering melakukan backup. Tunggu {$seconds} detik.",
+                'type' => 'error',
+            ]);
+            return;
+        }
+
+        RateLimiter::hit($throttleKey, 600);
+
+        $tables = [
+            'settings',
+            'categories',
+            'authors',
+            'publishers',
+            'shelves',
+            'class_rooms',
+            'teachers',
+            'books',
+            'author_book',
+            'book_copies',
+            'loans',
+            'guest_visits',
+            'announcements',
+        ];
+
+        $exportData = [
+            'app' => 'E-Library MA Assadah',
+            'version' => '1.0',
+            'exported_at' => now()->toIso8601String(),
+            'tables' => [],
+        ];
+
+        foreach ($tables as $tableName) {
+            if (DB::getSchemaBuilder()->hasTable($tableName)) {
+                $exportData['tables'][$tableName] = DB::table($tableName)->get()->map(fn ($row) => (array) $row)->toArray();
+            }
+        }
+
         $dir = storage_path('app/backups');
         if (! is_dir($dir)) {
             mkdir($dir, 0775, true);
         }
-        $filename = 'backup-'.now()->format('Y-m-d_His').'.sql';
+
+        $filename = 'backup-elibrary-'.now()->format('Y-m-d_His').'.json';
         $path = $dir.'/'.$filename;
-        $dump = "USE elibrary;\n";
-        $tables = DB::select('SHOW TABLES');
-        foreach ($tables as $t) {
-            $name = array_values((array) $t)[0];
-            $dump .= "-- Table: $name\n";
-            $create = DB::selectOne("SHOW CREATE TABLE `$name`");
-            $dump .= array_values((array) $create)[1].";\n\n";
-            $rows = DB::table($name)->get();
-            foreach ($rows as $row) {
-                $cols = implode(',', array_map(fn ($c) => "`$c`", array_keys((array) $row)));
-                $vals = implode(',', array_map(fn ($v) => is_null($v) ? 'NULL' : "'".addslashes($v)."'", array_values((array) $row)));
-                $dump .= "INSERT INTO `$name` ($cols) VALUES ($vals);\n";
-            }
-            $dump .= "\n";
-        }
-        file_put_contents($path, $dump);
+
+        file_put_contents($path, json_encode($exportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
         $this->refreshBackupInfo();
-        $this->dispatch('notify', ['message' => "Backup berhasil: $filename"]);
+        $this->dispatch('notify', ['message' => "Cadangan JSON berhasil dibuat: $filename"]);
+
+        return response()->download($path, $filename);
+    }
+
+    public function restore()
+    {
+        Gate::authorize('backup.restore');
+
+        $this->validate([
+            'restoreFile' => 'required|file|max:102400',
+        ]);
+
+        $content = file_get_contents($this->restoreFile->getRealPath());
+        $data = json_decode($content, true);
+
+        if (! is_array($data) || ! isset($data['tables']) || ! is_array($data['tables'])) {
+            $this->addError('restoreFile', 'Format file JSON cadangan tidak valid.');
+            return;
+        }
+
+        $isSqlite = DB::getDriverName() === 'sqlite';
+
+        try {
+            DB::transaction(function () use ($data, $isSqlite) {
+                if ($isSqlite) {
+                    DB::statement('PRAGMA foreign_keys = OFF;');
+                } else {
+                    DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
+                }
+
+                $order = [
+                    'settings',
+                    'categories',
+                    'authors',
+                    'publishers',
+                    'shelves',
+                    'class_rooms',
+                    'teachers',
+                    'books',
+                    'author_book',
+                    'book_copies',
+                    'loans',
+                    'guest_visits',
+                    'announcements',
+                ];
+
+                foreach ($order as $table) {
+                    if (isset($data['tables'][$table]) && DB::getSchemaBuilder()->hasTable($table)) {
+                        DB::table($table)->truncate();
+                        $rows = $data['tables'][$table];
+                        if (! empty($rows)) {
+                            // Chunk inserts for large tables
+                            foreach (array_chunk($rows, 100) as $chunk) {
+                                DB::table($table)->insert($chunk);
+                            }
+                        }
+                    }
+                }
+
+                if ($isSqlite) {
+                    DB::statement('PRAGMA foreign_keys = ON;');
+                } else {
+                    DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
+                }
+            });
+
+            $this->reset('restoreFile');
+            $this->mount();
+            $this->dispatch('notify', ['message' => 'Restorasi database dari file JSON berhasil!']);
+        } catch (\Throwable $e) {
+            if ($isSqlite) {
+                DB::statement('PRAGMA foreign_keys = ON;');
+            } else {
+                DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
+            }
+            $this->addError('restoreFile', 'Gagal memulihkan database: ' . $e->getMessage());
+        }
     }
 
     private function refreshBackupInfo()
     {
         $dir = storage_path('app/backups');
-        $files = is_dir($dir) ? glob($dir.'/*.sql') : [];
+        $files = is_dir($dir) ? glob($dir.'/*.json') : [];
         $files = array_values(array_filter($files, 'is_file'));
         if ($files) {
             usort($files, fn ($a, $b) => filemtime($a) <=> filemtime($b));
             $last = end($files);
             $this->lastBackup = basename($last).' · '.date('d M Y H:i', filemtime($last));
             $this->backupSize = filesize($last);
+        } else {
+            $this->lastBackup = null;
+            $this->backupSize = 0;
         }
     }
 

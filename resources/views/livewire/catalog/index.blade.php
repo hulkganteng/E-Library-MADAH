@@ -17,6 +17,7 @@
                 <input
                     wire:model.live.debounce.300ms="search"
                     type="search"
+                    aria-label="Cari judul buku, nama penulis, atau nomor ISBN"
                     placeholder="Cari judul buku, nama penulis, atau nomor ISBN..."
                     class="w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-600 focus:ring-3 focus:ring-emerald-600/15 placeholder:text-slate-400"
                 >
@@ -26,6 +27,7 @@
             <div class="sm:col-span-3">
                 <select
                     wire:model.live="category"
+                    aria-label="Filter kategori buku"
                     class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-600 focus:ring-3 focus:ring-emerald-600/15"
                 >
                     <option value="">Semua Kategori</option>
@@ -39,6 +41,7 @@
             <div class="sm:col-span-3">
                 <select
                     wire:model.live="type"
+                    aria-label="Filter format koleksi"
                     class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-600 focus:ring-3 focus:ring-emerald-600/15"
                 >
                     <option value="">Semua Format</option>
@@ -70,10 +73,10 @@
 
                 <button
                     wire:click="clear"
-                    class="ml-auto inline-flex items-center gap-1 font-semibold text-rose-600 hover:text-rose-700 transition cursor-pointer"
+                    class="ml-auto inline-flex items-center gap-1.5 py-1 px-2.5 rounded-md font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition cursor-pointer"
                 >
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    Reset Filter
+                    <span>Reset Filter</span>
                 </button>
             </div>
         @endif

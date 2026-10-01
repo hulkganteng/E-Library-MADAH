@@ -7,6 +7,7 @@ use App\Models\Loan;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -30,6 +31,8 @@ class Index extends Component
     public $selectedCopy = null;
 
     public $borrowerName = '';
+
+    public $borrowerNis = '';
 
     public $borrowerClass = '';
 
@@ -88,6 +91,18 @@ class Index extends Component
         $this->selectedMember = $id;
     }
 
+    public function updatedBorrowerNis($val)
+    {
+        $nis = trim($val);
+        if ($nis) {
+            $student = \App\Models\Student::with('user', 'classRoom')->where('nis', $nis)->first();
+            if ($student) {
+                $this->borrowerName = $student->user?->name ?? $this->borrowerName;
+                $this->borrowerClass = $student->classRoom?->name ?? $this->borrowerClass;
+            }
+        }
+    }
+
     public function updatedCopyCode()
     {
         $this->selectedCopy = null;
@@ -98,6 +113,15 @@ class Index extends Component
         if (auth()->check()) {
             Gate::authorize('peminjaman.create');
         }
+
+        $throttleKey = 'loan-scan-copy:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 30)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->dispatch('notify', ['message' => "Terlalu banyak scan eksemplar. Tunggu {$seconds} detik.", 'type' => 'error']);
+            return;
+        }
+        RateLimiter::hit($throttleKey, 60);
+
         $this->validate(['copyCode' => 'required']);
         $code = trim($this->copyCode);
         if (filter_var($code, FILTER_VALIDATE_URL)) {
@@ -115,6 +139,12 @@ class Index extends Component
             return;
         }
         $this->selectedCopy = $copy;
+
+        if ($copy->book?->is_textbook) {
+            $this->dueDays = 365;
+        } else {
+            $this->dueDays = (int) Setting::get('loan_duration_days', 7);
+        }
     }
 
     public function checkout()
@@ -123,11 +153,20 @@ class Index extends Component
             Gate::authorize('peminjaman.create');
         }
 
+        $throttleKey = 'loan-checkout:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 20)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->dispatch('notify', ['message' => "Terlalu banyak request peminjaman. Tunggu {$seconds} detik.", 'type' => 'error']);
+            return;
+        }
+
         if (! $this->selectedCopy) {
             $this->dispatch('notify', ['message' => 'Scan atau cari eksemplar buku terlebih dahulu.', 'type' => 'error']);
 
             return;
         }
+
+        RateLimiter::hit($throttleKey, 60);
 
         $member = $this->getStaticUser();
         $copy = $this->selectedCopy;
@@ -143,13 +182,42 @@ class Index extends Component
         $this->validate([
             'borrowerName' => 'required|string|max:100',
             'borrowerClass' => 'required|string|max:50',
+            'borrowerNis' => 'nullable|string|max:50',
         ]);
+
+        $bName = trim($this->borrowerName);
+        $bNis = trim($this->borrowerNis);
+        $bClass = trim($this->borrowerClass);
+
+        // Security check: cegah siswa yang sama meminjam judul/kitab yang sama bersamaan
+        $alreadyHoldingSameBook = Loan::where('status', '!=', 'dikembalikan')
+            ->whereHas('bookCopy', function ($q) use ($copy) {
+                $q->where('book_id', $copy->book_id);
+            })
+            ->where(function ($q) use ($bNis, $bName, $bClass) {
+                if ($bNis !== '') {
+                    $q->where('borrower_nis', $bNis);
+                } else {
+                    $q->where('borrower_name', $bName)
+                      ->where('borrower_class', $bClass);
+                }
+            })
+            ->exists();
+
+        if ($alreadyHoldingSameBook) {
+            $this->dispatch('notify', [
+                'message' => "Peminjam ini masih meminjam judul buku/kitab yang sama dan belum dikembalikan.",
+                'type' => 'error'
+            ]);
+            return;
+        }
 
         Loan::create([
             'user_id' => $member->id,
             'book_copy_id' => $copy->id,
-            'borrower_name' => trim($this->borrowerName),
-            'borrower_class' => trim($this->borrowerClass),
+            'borrower_name' => $bName,
+            'borrower_nis' => $bNis ?: null,
+            'borrower_class' => $bClass,
             'borrowed_at' => now(),
             'due_at' => now()->addDays($this->dueDays),
             'status' => 'dipinjam',
@@ -158,7 +226,7 @@ class Index extends Component
         $copy->update(['status' => 'dipinjam']);
         $copy->book()->increment('borrow_count');
 
-        $this->reset('copyCode', 'selectedCopy', 'borrowerName', 'borrowerClass');
+        $this->reset('copyCode', 'selectedCopy', 'borrowerName', 'borrowerNis', 'borrowerClass');
         $this->dispatch('notify', ['message' => 'Peminjaman berhasil dibuat.']);
     }
 
@@ -173,6 +241,15 @@ class Index extends Component
         if (auth()->check()) {
             Gate::authorize('peminjaman.edit');
         }
+
+        $throttleKey = 'loan-scan-return:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 30)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->dispatch('notify', ['message' => "Terlalu banyak scan pengembalian. Tunggu {$seconds} detik.", 'type' => 'error']);
+            return;
+        }
+        RateLimiter::hit($throttleKey, 60);
+
         $this->validate(['returnCode' => 'required']);
         $code = trim($this->returnCode);
         if (filter_var($code, FILTER_VALIDATE_URL)) {

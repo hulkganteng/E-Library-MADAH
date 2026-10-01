@@ -132,39 +132,90 @@
             </x-card>
         </div>
 
-        <div>
-            <x-card heading="Pencadangan Database" subheading="Salinan cadangan database SQLite/MySQL">
+        <div class="space-y-6">
+            {{-- Backup Card --}}
+            <x-card heading="Cadangkan Data (.JSON)" subheading="Ekspor database ke berkas JSON">
                 <x-slot:icon>
                     <svg class="h-4.5 w-4.5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg>
                 </x-slot:icon>
 
                 <p class="text-xs text-slate-500 leading-relaxed">
-                    Cadangkan seluruh tabel koleksi buku, siswa, guru, dan transaksi peminjaman untuk menjaga keamanan data.
+                    Unduh seluruh data buku, kategori, penulis, guru, dan riwayat sirkulasi dalam format JSON portabel.
                 </p>
 
                 @if($lastBackup)
-                    <div class="mt-4 rounded-lg bg-emerald-50/70 border border-emerald-200/80 p-3.5 text-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="grid h-5 w-5 place-items-center rounded bg-emerald-700 text-white font-bold text-[10px]">✓</span>
-                            <p class="font-bold text-emerald-900">Cadangan Terakhir Tersedia</p>
-                        </div>
-                        <p class="mt-1.5 text-slate-600 font-medium">{{ $lastBackup }}</p>
-                        <p class="mt-0.5 text-slate-400 font-mono text-[11px]">{{ number_format($backupSize / 1024, 1) }} KB</p>
+                    <div class="mt-4 rounded-lg bg-emerald-50/70 border border-emerald-200/80 p-3 text-xs">
+                        <p class="font-bold text-emerald-900">Arsip Cadangan Terakhir:</p>
+                        <p class="mt-1 text-slate-700 font-medium truncate">{{ $lastBackup }}</p>
+                        <p class="mt-0.5 text-slate-500 font-mono text-[11px]">{{ number_format($backupSize / 1024, 1) }} KB</p>
                     </div>
                 @else
-                    <div class="mt-4 rounded-lg bg-slate-50 border border-slate-200/80 p-3.5 text-xs text-slate-400 text-center">
-                        Belum ada arsip pencadangan database.
+                    <div class="mt-4 rounded-lg bg-slate-50 border border-slate-200/80 p-3 text-xs text-slate-400 text-center">
+                        Belum ada arsip cadangan tersimpan.
                     </div>
                 @endif
 
                 <button
                     type="button"
                     wire:click="backup"
-                    class="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-slate-900 transition cursor-pointer"
+                    wire:loading.attr="disabled"
+                    wire:target="backup"
+                    class="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-800 transition cursor-pointer disabled:opacity-50"
                 >
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-                    <span>Buat Cadangan Database Sekarang</span>
+                    <svg wire:loading.remove wire:target="backup" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <svg wire:loading wire:target="backup" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span wire:loading.remove wire:target="backup">Unduh Cadangan .JSON</span>
+                    <span wire:loading wire:target="backup">Menyiapkan berkas...</span>
                 </button>
+            </x-card>
+
+            {{-- Restore Card --}}
+            <x-card heading="Pulihkan Data (.JSON)" subheading="Restorasi database dari berkas cadangan">
+                <x-slot:icon>
+                    <svg class="h-4.5 w-4.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
+                </x-slot:icon>
+
+                <div class="rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900 leading-relaxed">
+                    <strong>Peringatan:</strong> Proses restorasi akan menimpa data yang ada saat ini sesuai isi berkas cadangan JSON.
+                </div>
+
+                <form wire:submit="restore" class="mt-4 space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Berkas Cadangan (.json)</label>
+                        <input
+                            type="file"
+                            wire:model="restoreFile"
+                            accept=".json,application/json"
+                            class="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer border border-slate-300 rounded-lg p-1 bg-white"
+                        >
+                        @error('restoreFile')
+                            <p class="mt-1.5 text-xs text-rose-600 font-medium">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button
+                        type="submit"
+                        wire:loading.attr="disabled"
+                        wire:target="restore,restoreFile"
+                        wire:confirm="PERINGATAN: Apakah Anda yakin ingin memulihkan database dari berkas JSON ini? Data yang ada akan ditimpa."
+                        class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-amber-700 transition cursor-pointer disabled:opacity-50"
+                    >
+                        <svg wire:loading.remove wire:target="restore" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        <svg wire:loading wire:target="restore" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span wire:loading.remove wire:target="restore">Pulihkan Database dari JSON</span>
+                        <span wire:loading wire:target="restore">Memulihkan data...</span>
+                    </button>
+                </form>
             </x-card>
         </div>
     </div>

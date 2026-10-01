@@ -7,6 +7,7 @@ use App\Models\ClassRoom;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -47,7 +48,20 @@ class Students extends Component
     public function import()
     {
         Gate::authorize('siswa.import');
+
+        $throttleKey = 'students-import:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->dispatch('notify', [
+                'message' => "Terlalu sering melakukan import data siswa. Tunggu {$seconds} detik.",
+                'type' => 'error',
+            ]);
+            return;
+        }
+
         $this->validate(['importFile' => 'required|file|mimes:xlsx,xls,csv|max:4096']);
+        RateLimiter::hit($throttleKey, 300);
+
         $import = new StudentsImport;
         Excel::import($import, $this->importFile->getRealPath());
         $msg = 'Import selesai.';

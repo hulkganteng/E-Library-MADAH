@@ -11,6 +11,7 @@ use App\Models\Teacher;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -31,6 +32,14 @@ class Index extends Component
     public function exportPdf()
     {
         Gate::authorize('laporan.export');
+
+        $throttleKey = 'reports-export:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 10)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            abort(429, "Terlalu banyak permintaan ekspor laporan. Silakan tunggu {$seconds} detik.");
+        }
+        RateLimiter::hit($throttleKey, 60);
+
         $data = $this->loansData();
         $pdf = Pdf::loadView('reports.loans', [
             'loans' => $data,
@@ -44,6 +53,13 @@ class Index extends Component
     public function exportExcel()
     {
         Gate::authorize('laporan.export');
+
+        $throttleKey = 'reports-export:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 10)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            abort(429, "Terlalu banyak permintaan ekspor laporan. Silakan tunggu {$seconds} detik.");
+        }
+        RateLimiter::hit($throttleKey, 60);
 
         return Excel::download(new LoansExport($this->from, $this->to, $this->status), 'laporan-peminjaman.xlsx');
     }

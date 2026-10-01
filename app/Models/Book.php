@@ -12,10 +12,13 @@ class Book extends Model
     protected $fillable = [
         'category_id', 'publisher_id', 'shelf_id', 'title', 'slug', 'isbn',
         'edition', 'publish_year', 'page_count', 'type', 'description',
-        'cover', 'ebook_file', 'is_repository', 'borrow_count',
+        'cover', 'ebook_file', 'is_repository', 'is_textbook', 'borrow_count',
     ];
 
-    protected $casts = ['is_repository' => 'boolean'];
+    protected $casts = [
+        'is_repository' => 'boolean',
+        'is_textbook' => 'boolean',
+    ];
 
     public function category()
     {

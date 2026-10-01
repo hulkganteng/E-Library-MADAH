@@ -43,7 +43,9 @@
         }
     }
 }">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+@assets
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+@endassets
     <x-page-header
         title="Layanan Sirkulasi"
         subtitle="Peminjaman, pengembalian, dan perpanjangan koleksi buku perpustakaan."
@@ -118,6 +120,12 @@
                     @endif
 
                     <div class="border-t border-slate-100 pt-3 space-y-3">
+                        <x-input
+                            wire:model.live.debounce.300ms="borrowerNis"
+                            label="Scan Kartu Santri / NIS (Opsional)"
+                            placeholder="Ketik/Scan NIS..."
+                            hint="Jika diisi, Nama dan Kelas akan terisi otomatis dari database siswa."
+                        />
                         <x-input wire:model="borrowerName" label="Nama Peminjam *" placeholder="Contoh: Ahmad Subagyo" />
                         @error('borrowerName') <p class="text-xs text-rose-600 -mt-2">{{ $message }}</p> @enderror
                         <x-input wire:model="borrowerClass" label="Kelas *" placeholder="Contoh: XII IPA 1" />
@@ -127,7 +135,7 @@
                             label="Durasi Peminjaman (Hari)"
                             type="number"
                             min="1"
-                            hint="Durasi standar default mengikuti kebijakan perpustakaan."
+                            hint="Durasi standar (otomatis 365 hari untuk Kitab Pelajaran Tahunan)."
                         />
                     </div>
 
@@ -272,7 +280,12 @@
                                 <td class="px-4 py-3.5 sm:px-6">
                                     @php($bName = $loan->borrower_name ?? ($loan->notes ? str_replace('Peminjam: ', '', $loan->notes) : ($loan->user->name === 'Peminjam Statis (Komputer Perpustakaan)' ? 'Nama Peminjam' : $loan->user->name)))
                                     <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $bName }}</p>
-                                    <p class="text-[11px] {{ $loan->borrower_class ? 'text-emerald-600 font-semibold' : 'text-slate-400' }}">{{ $loan->borrower_class ?? 'Peminjam' }}</p>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        @if($loan->borrower_nis)
+                                            <span class="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{{ $loan->borrower_nis }}</span>
+                                        @endif
+                                        <span class="text-[11px] {{ $loan->borrower_class ? 'text-emerald-600 font-semibold' : 'text-slate-400' }}">{{ $loan->borrower_class ?? 'Peminjam' }}</span>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3.5">
                                     <p class="font-medium text-slate-800 line-clamp-1 text-xs sm:text-sm">{{ $loan->bookCopy->book->title }}</p>

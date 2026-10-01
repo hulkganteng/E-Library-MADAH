@@ -3,6 +3,7 @@
 namespace App\Livewire\Visits;
 
 use App\Models\GuestVisit;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class GuestBook extends Component
@@ -42,7 +43,19 @@ class GuestBook extends Component
 
     public function save(): void
     {
+        $throttleKey = 'guest-book:' . request()->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->dispatch('notify', [
+                'message' => "Terlalu banyak pengisian buku tamu. Mohon tunggu {$seconds} detik.",
+                'type' => 'error',
+            ]);
+            return;
+        }
+
         $validated = $this->validate();
+
+        RateLimiter::hit($throttleKey, 300);
 
         GuestVisit::create([
             'name' => trim($validated['name']),

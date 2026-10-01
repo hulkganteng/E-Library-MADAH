@@ -1,17 +1,13 @@
 @props(['title' => 'Buku Kunjungan Tamu'])
 <div class="space-y-6 max-w-5xl mx-auto py-2 sm:py-6">
     {{-- Header Banner --}}
-    <div class="rounded-2xl bg-gradient-to-r from-brand-950 via-brand-900 to-emerald-950 p-5 sm:p-8 text-white shadow-soft relative overflow-hidden">
-        <div class="absolute -right-8 -bottom-8 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl"></div>
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="rounded-xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                    Buku Tamu Elektronik
-                </span>
-                <h1 class="text-xl sm:text-3xl font-bold tracking-tight text-white">Presensi & Kunjungan Tamu</h1>
-                <p class="text-xs sm:text-sm text-emerald-200/80 mt-1 max-w-xl">
-                    Silakan isi formulir kehadiran di bawah ini untuk mencatat kunjungan Anda di Perpustakaan MA Assadah.
+                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Buku Tamu Perpustakaan</p>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 mt-0.5">Presensi & Kunjungan Tamu</h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                    Silakan isi formulir kehadiran untuk mencatat kunjungan di Perpustakaan MA Assadah.
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3 shrink-0">
@@ -26,14 +22,14 @@
                         }
                     }"
                     x-init="updateTime(); setInterval(() => updateTime(), 1000)"
-                    class="bg-white/10 backdrop-blur-xs border border-white/10 rounded-xl px-4 py-3 text-center min-w-36 hidden sm:block"
+                    class="border border-slate-200 bg-slate-50/80 rounded-lg px-3.5 py-2 text-center min-w-36 hidden sm:block"
                 >
-                    <p class="text-[11px] font-semibold text-emerald-200 uppercase tracking-wider" x-text="date"></p>
-                    <p class="text-xl sm:text-2xl font-bold font-mono text-white mt-0.5" x-text="time"></p>
+                    <p class="text-[11px] font-semibold text-slate-500" x-text="date"></p>
+                    <p class="text-lg font-bold font-mono text-slate-800" x-text="time"></p>
                 </div>
-                <div class="bg-white/10 backdrop-blur-xs border border-white/10 rounded-xl px-4 py-3 text-center w-full sm:w-auto min-w-28">
-                    <p class="text-[11px] font-semibold text-emerald-200 uppercase tracking-wider">Pengunjung Hari Ini</p>
-                    <p class="text-2xl sm:text-3xl font-extrabold text-white mt-0.5">{{ number_format($todayCount) }}</p>
+                <div class="border border-emerald-200 bg-emerald-50 rounded-lg px-4 py-2 text-center w-full sm:w-auto min-w-28">
+                    <p class="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Hari Ini</p>
+                    <p class="text-2xl font-extrabold text-emerald-900">{{ number_format($todayCount) }}</p>
                 </div>
             </div>
         </div>
@@ -162,13 +158,18 @@
                         <button
                             type="submit"
                             wire:loading.attr="disabled"
-                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-6 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-800 focus:ring-3 focus:ring-emerald-600/30 transition cursor-pointer disabled:opacity-50"
+                            wire:target="save"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-6 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-800 focus:ring-3 focus:ring-emerald-600/30 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <svg wire:loading.remove class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <svg wire:loading.remove wire:target="save" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
                             </svg>
-                            <span wire:loading.remove>Kirim Presensi Kunjungan</span>
-                            <span wire:loading>Menyimpan data...</span>
+                            <svg wire:loading wire:target="save" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span wire:loading.remove wire:target="save">Kirim Presensi Kunjungan</span>
+                            <span wire:loading wire:target="save">Menyimpan data...</span>
                         </button>
                     </div>
                 </form>

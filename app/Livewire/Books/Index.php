@@ -11,6 +11,7 @@ use App\Models\Publisher;
 use App\Models\Shelf;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -48,6 +49,8 @@ class Index extends Component
     public $description;
 
     public $is_repository = false;
+
+    public $is_textbook = false;
 
     public $cover;
 
@@ -98,7 +101,20 @@ class Index extends Component
     public function import()
     {
         Gate::authorize('buku.import');
+
+        $throttleKey = 'book-import:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->dispatch('notify', [
+                'message' => "Terlalu sering melakukan import buku. Silakan tunggu {$seconds} detik.",
+                'type' => 'error',
+            ]);
+            return;
+        }
+
         $this->validate(['importFile' => 'required|file|mimes:xlsx,xls,csv|max:4096']);
+        RateLimiter::hit($throttleKey, 300);
+
         $import = new BooksImport;
         Excel::import($import, $this->importFile->getRealPath());
 
@@ -129,6 +145,7 @@ class Index extends Component
         $this->authors = [];
         $this->type = 'fisik';
         $this->is_repository = false;
+        $this->is_textbook = false;
         $this->initial_copies = 1;
         $this->showAdvanced = false;
         $this->showModal = true;
@@ -141,7 +158,7 @@ class Index extends Component
         $this->apiCoverUrl = null;
         $this->showAdvanced = true;
         $this->apiQuickResults = [];
-        $this->fill($book->only('title', 'category_id', 'publisher_id', 'shelf_id', 'isbn', 'edition', 'publish_year', 'page_count', 'type', 'description', 'is_repository'));
+        $this->fill($book->only('title', 'category_id', 'publisher_id', 'shelf_id', 'isbn', 'edition', 'publish_year', 'page_count', 'type', 'description', 'is_repository', 'is_textbook'));
         $this->authors = $book->authors->pluck('id')->map(fn ($v) => (string) $v)->toArray();
         $this->showModal = true;
     }
@@ -184,6 +201,7 @@ class Index extends Component
         $book->fill($data);
         $book->slug = $this->editing ? $book->slug : $slug;
         $book->is_repository = (bool) $this->is_repository;
+        $book->is_textbook = (bool) $this->is_textbook;
         $book->save();
 
         $book->authors()->sync($this->authors);
@@ -320,12 +338,21 @@ class Index extends Component
     {
         Gate::authorize('buku.create');
 
+        $throttleKey = 'book-api-search:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 15)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $this->apiError = "Terlalu banyak pencarian API. Silakan tunggu {$seconds} detik.";
+            return;
+        }
+
         $query = trim($this->apiQuery);
         if (strlen($query) < 2) {
             $this->apiError = 'Masukkan minimal 2 karakter untuk mencari buku.';
             $this->apiResults = [];
             return;
         }
+
+        RateLimiter::hit($throttleKey, 60);
 
         $this->apiError = null;
         $this->apiResults = [];
@@ -334,7 +361,57 @@ class Index extends Component
         $startTime = microtime(true);
 
         try {
-            if ($this->apiSource === 'google') {
+            if ($this->apiSource === 'sibi') {
+                $sibiService = app(\App\Services\SibiService::class);
+                $endpoint = 'https://api.buku.cloudapp.web.id/api/catalogue/getPenggerakTextBooks?title='.urlencode($query);
+                $this->lastExecutedUrl = $endpoint;
+
+                $res = $sibiService->getBooks('merdeka', $query, 12, 0);
+                if (empty($res['items'])) {
+                    $res = $sibiService->getBooks('kemenag', $query, 12, 0);
+                }
+                if (empty($res['items'])) {
+                    $res = $sibiService->getBooks('k13', $query, 12, 0);
+                }
+                if (empty($res['items'])) {
+                    $res = $sibiService->getBooks('nonteks', $query, 12, 0);
+                }
+
+                $this->lastResponseTime = round((microtime(true) - $startTime) * 1000);
+                $this->apiRawJson = json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+                if (! empty($res['error'])) {
+                    $this->apiError = $res['error'];
+                    return;
+                }
+
+                if (empty($res['items'])) {
+                    $this->apiError = 'Tidak ada buku ditemukan di SIBI / Kemenag untuk pencarian "'.$query.'".';
+                    return;
+                }
+
+                $results = [];
+                foreach ($res['items'] as $item) {
+                    $authors = array_filter(array_map('trim', preg_split('/[,;&]|\bdan\b/i', $item['writer'] ?? '')));
+                    $results[] = [
+                        'id' => $item['id'],
+                        'source' => $item['source'] ?? 'SIBI Kemendikdasmen',
+                        'title' => $item['title'],
+                        'authors' => array_values($authors),
+                        'publisher' => $item['publisher'],
+                        'publish_year' => (int) date('Y'),
+                        'page_count' => null,
+                        'isbn' => $item['isbn'],
+                        'edition' => null,
+                        'description' => $item['description'],
+                        'cover_url' => $item['cover'],
+                        'categories' => [$item['curriculum'] ?? 'Buku Resmi'],
+                        'ebook_url' => $item['attachment'] ?? null,
+                    ];
+                }
+
+                $this->apiResults = $results;
+            } elseif ($this->apiSource === 'google') {
                 $params = [
                     'q' => $query,
                     'maxResults' => 10,
@@ -591,8 +668,9 @@ class Index extends Component
             'description' => $item['description'] ?? null,
             'publisher_id' => $publisherId,
             'category_id' => $categoryId,
-            'type' => 'fisik',
+            'type' => ! empty($item['ebook_url']) ? 'ebook' : 'fisik',
             'cover' => $coverPath,
+            'ebook_file' => $item['ebook_url'] ?? null,
             'is_repository' => false,
         ]);
 

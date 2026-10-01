@@ -21,6 +21,7 @@ use App\Livewire\Members\Teachers;
 use App\Livewire\Notifications;
 use App\Livewire\Reports\Index as Reports;
 use App\Livewire\Settings\Index as Settings;
+use App\Livewire\Sibi\Index as Sibi;
 use App\Livewire\Visits\GuestBook;
 use App\Livewire\Visits\Index as Visits;
 use Illuminate\Support\Facades\Route;
@@ -29,20 +30,21 @@ Route::get('/', function () {
     return redirect()->route('catalog.index');
 })->name('home');
 
-Route::get('/login', Login::class)->name('login')->middleware('guest');
+Route::get('/login', Login::class)->name('login')->middleware(['guest', 'throttle:10,1']);
 Route::post('/logout', function () {
     auth()->logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
 
     return redirect()->route('login');
-})->name('logout');
+})->name('logout')->middleware('throttle:10,1');
 
-Route::get('/katalog', Catalog::class)->name('catalog.index');
-Route::get('/katalog/{book}', CatalogShow::class)->name('catalog.show');
-Route::get('/display', Display::class)->name('display.index');
-Route::get('/peminjaman', Loans::class)->name('loans.index');
-Route::get('/buku-tamu', GuestBook::class)->name('visits.guest-book');
+Route::get('/katalog', Catalog::class)->name('catalog.index')->middleware('throttle:120,1');
+Route::get('/katalog/{book}', CatalogShow::class)->name('catalog.show')->middleware('throttle:120,1');
+Route::get('/sibi', Sibi::class)->name('sibi.index')->middleware('throttle:60,1');
+Route::get('/display', Display::class)->name('display.index')->middleware('throttle:120,1');
+Route::get('/peminjaman', Loans::class)->name('loans.index')->middleware('throttle:60,1');
+Route::get('/buku-tamu', GuestBook::class)->name('visits.guest-book')->middleware('throttle:30,1');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
@@ -55,6 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:penulis.view')->get('/penulis', Authors::class)->name('authors.index');
     Route::middleware('can:penerbit.view')->get('/penerbit', Publishers::class)->name('publishers.index');
     Route::middleware('can:rak.view')->get('/rak', Shelves::class)->name('shelves.index');
+    Route::middleware('can:kelas.view')->get('/kelas', Classes::class)->name('classes.index');
 
     Route::middleware('can:guru.view')->get('/guru', Teachers::class)->name('teachers.index');
 

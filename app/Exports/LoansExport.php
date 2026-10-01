@@ -25,14 +25,17 @@ class LoansExport implements FromQuery, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        return ['No', 'Anggota', 'Judul Buku', 'Kode Inventaris', 'Tanggal Pinjam', 'Jatuh Tempo', 'Tanggal Kembali', 'Status', 'Denda'];
+        return ['No', 'Peminjam', 'NIS', 'Kelas', 'Judul Buku', 'Kode Inventaris', 'Tanggal Pinjam', 'Jatuh Tempo', 'Tanggal Kembali', 'Status', 'Denda'];
     }
 
     public function map($loan): array
     {
+        $name = $loan->borrower_name ?? $loan->user->name;
         return [
             $loan->id,
-            $loan->user->name,
+            $name,
+            $loan->borrower_nis ?? '-',
+            $loan->borrower_class ?? '-',
             $loan->bookCopy->book->title,
             $loan->bookCopy->inventory_code,
             $loan->borrowed_at?->format('d-m-Y'),

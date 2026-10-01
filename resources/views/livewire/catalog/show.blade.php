@@ -52,14 +52,43 @@
                 {{-- Availability & Actions --}}
                 <div class="mt-5 space-y-3 pt-4 border-t border-slate-100">
                     @if($book->type === 'ebook')
-                        <a
-                            href="{{ asset('storage/' . $book->ebook_file) }}"
-                            target="_blank"
-                            class="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-800 transition"
-                        >
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>
-                            Baca E-Book Digital
-                        </a>
+                        <div class="space-y-2">
+                            @if($book->ebook_file)
+                                <button
+                                    type="button"
+                                    wire:click="openReader"
+                                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-800 transition cursor-pointer"
+                                >
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                                    <span>Baca Buku Digital</span>
+                                </button>
+                                <a
+                                    href="{{ asset('storage/' . $book->ebook_file) }}"
+                                    target="_blank"
+                                    class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                                >
+                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                                    <span>Buka di Tab Baru / Unduh</span>
+                                </a>
+                            @else
+                                <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-xs text-amber-800">
+                                    File dokumen e-book belum diunggah.
+                                </div>
+                            @endif
+
+                            <button
+                                wire:click="toggleFavorite"
+                                class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition cursor-pointer shadow-2xs"
+                            >
+                                @if(auth()->check() && auth()->user()->favorites()->where('book_id', $book->id)->exists())
+                                    <svg class="h-4 w-4 text-amber-500 fill-amber-500" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                    <span>Buku Favorit Anda</span>
+                                @else
+                                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+                                    <span>Tambah ke Favorit</span>
+                                @endif
+                            </button>
+                        </div>
                     @else
                         <div class="rounded-lg border border-slate-200/80 bg-slate-50/60 p-3.5">
                             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Status Ketersediaan</p>
@@ -237,6 +266,61 @@
                     >
                         Kirim Pengajuan Peminjaman
                     </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Modal PDF E-Book Reader --}}
+    @if($showReader && $readerUrl)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-2 sm:p-4">
+            <div class="flex flex-col w-full h-full max-w-6xl bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+                {{-- Reader Topbar --}}
+                <div class="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 text-white shrink-0">
+                    <div class="flex items-center gap-3 min-w-0 pr-4">
+                        <div class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-500/20 text-emerald-400">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="truncate text-sm font-bold text-white">{{ $book->title }}</h3>
+                            <p class="truncate text-xs text-slate-400">E-Book Reader • {{ $book->authors->pluck('name')->implode(', ') ?: 'MA Assadah' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a
+                            href="{{ $readerUrl }}"
+                            target="_blank"
+                            download
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 transition"
+                            title="Unduh E-Book"
+                        >
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span class="hidden sm:inline">Unduh File</span>
+                        </a>
+                        <button
+                            type="button"
+                            wire:click="closeReader"
+                            class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition cursor-pointer"
+                            aria-label="Tutup Reader"
+                        >
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Embedded PDF Viewer --}}
+                <div class="flex-1 bg-slate-950 relative">
+                    <iframe
+                        src="{{ $readerUrl }}#toolbar=1"
+                        class="w-full h-full border-0"
+                        title="{{ $book->title }}"
+                    ></iframe>
                 </div>
             </div>
         </div>

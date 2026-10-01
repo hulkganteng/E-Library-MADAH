@@ -7,6 +7,7 @@ use App\Models\BookCopy;
 use App\Models\Loan;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class Show extends Component
@@ -22,6 +23,24 @@ class Show extends Component
     public $selectedCopyId = null;
 
     public $dueDays = 7;
+
+    public $showReader = false;
+
+    public $readerUrl = '';
+
+    public function openReader()
+    {
+        if ($this->book->type === 'ebook' && $this->book->ebook_file) {
+            $this->readerUrl = asset('storage/' . $this->book->ebook_file);
+            $this->showReader = true;
+        }
+    }
+
+    public function closeReader()
+    {
+        $this->showReader = false;
+        $this->readerUrl = '';
+    }
 
     public function mount(Book $book)
     {
@@ -55,10 +74,19 @@ class Show extends Component
 
     public function submitBorrowRequest()
     {
+        $throttleKey = 'borrow-request:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            session()->flash('error', "Terlalu banyak permohonan pinjam. Silakan tunggu {$seconds} detik.");
+            return;
+        }
+
         $this->validate([
             'borrowerName' => 'required|string|max:100',
             'borrowerClass' => 'required|string|max:50',
         ]);
+
+        RateLimiter::hit($throttleKey, 3600);
 
         $copy = BookCopy::find($this->selectedCopyId);
         if (! $copy || $copy->status !== 'tersedia') {
@@ -110,6 +138,13 @@ class Show extends Component
 
     public function reserve()
     {
+        $throttleKey = 'reserve-request:' . (auth()->id() ?? request()->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            session()->flash('error', "Terlalu banyak reservasi. Silakan tunggu {$seconds} detik.");
+            return;
+        }
+
         $user = auth()->user() ?? $this->getStaticUser();
         if ($this->book->type === 'ebook') {
             return redirect()->route('catalog.show', $this->book);
@@ -119,6 +154,9 @@ class Show extends Component
 
             return;
         }
+
+        RateLimiter::hit($throttleKey, 3600);
+
         $user->reservations()->create([
             'book_id' => $this->book->id,
             'reserved_at' => now(),
