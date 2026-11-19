@@ -14,7 +14,7 @@
     </x-page-header>
 
     {{-- Top Key Metrics --}}
-    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-x-5 border-b border-stone-950/10 lg:grid-cols-4 lg:gap-x-7">
         <x-stat-card
             label="Total Judul Buku"
             :value="$totalBooks"
@@ -122,23 +122,17 @@
             </x-card>
 
             {{-- Monthly Circulation Summary --}}
-            <div class="grid grid-cols-2 gap-4">
-                <div class="rounded-xl border border-slate-200/90 bg-white p-5 shadow-soft flex items-center justify-between">
+            <div class="grid grid-cols-2 border-y border-stone-950/10">
+                <div class="flex items-center justify-between py-5 pr-5">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Peminjaman Bulan Ini</p>
-                        <p class="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $monthlyLoans }}</p>
-                    </div>
-                    <div class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" /></svg>
+                        <p class="text-sm font-medium text-stone-500">Peminjaman bulan ini</p>
+                        <p class="mt-1 text-2xl font-semibold text-stone-900 tabular-nums sm:text-3xl">{{ $monthlyLoans }}</p>
                     </div>
                 </div>
-                <div class="rounded-xl border border-slate-200/90 bg-white p-5 shadow-soft flex items-center justify-between">
+                <div class="flex items-center justify-between border-l border-stone-950/10 py-5 pl-5">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Pengembalian Bulan Ini</p>
-                        <p class="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $monthlyReturns }}</p>
-                    </div>
-                    <div class="grid h-10 w-10 place-items-center rounded-xl bg-sky-50 text-sky-700 border border-sky-100">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" /></svg>
+                        <p class="text-sm font-medium text-stone-500">Pengembalian bulan ini</p>
+                        <p class="mt-1 text-2xl font-semibold text-stone-900 tabular-nums sm:text-3xl">{{ $monthlyReturns }}</p>
                     </div>
                 </div>
             </div>

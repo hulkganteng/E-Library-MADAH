@@ -125,9 +125,18 @@ class Index extends Component
         $this->validate(['copyCode' => 'required']);
         $code = trim($this->copyCode);
         if (filter_var($code, FILTER_VALIDATE_URL)) {
-            $code = basename(parse_url($code, PHP_URL_PATH));
+            $parsedQuery = [];
+            parse_str(parse_url($code, PHP_URL_QUERY) ?? '', $parsedQuery);
+            if (! empty($parsedQuery['copy'])) {
+                $code = $parsedQuery['copy'];
+            } else {
+                $code = basename(parse_url($code, PHP_URL_PATH));
+            }
         }
         $copy = BookCopy::with('book')->where('inventory_code', $code)->orWhere('qr_code', $code)->first();
+        if (! $copy && is_numeric($code)) {
+            $copy = BookCopy::with('book')->where('book_id', $code)->where('status', 'tersedia')->first();
+        }
         if (! $copy) {
             $this->dispatch('notify', ['message' => 'Kode eksemplar tidak ditemukan.', 'type' => 'error']);
 
@@ -253,9 +262,18 @@ class Index extends Component
         $this->validate(['returnCode' => 'required']);
         $code = trim($this->returnCode);
         if (filter_var($code, FILTER_VALIDATE_URL)) {
-            $code = basename(parse_url($code, PHP_URL_PATH));
+            $parsedQuery = [];
+            parse_str(parse_url($code, PHP_URL_QUERY) ?? '', $parsedQuery);
+            if (! empty($parsedQuery['copy'])) {
+                $code = $parsedQuery['copy'];
+            } else {
+                $code = basename(parse_url($code, PHP_URL_PATH));
+            }
         }
         $copy = BookCopy::with('book')->where('inventory_code', $code)->orWhere('qr_code', $code)->first();
+        if (! $copy && is_numeric($code)) {
+            $copy = BookCopy::with('book')->where('book_id', $code)->where('status', 'dipinjam')->first();
+        }
         if (! $copy) {
             $this->dispatch('notify', ['message' => 'Kode eksemplar tidak ditemukan.', 'type' => 'error']);
 

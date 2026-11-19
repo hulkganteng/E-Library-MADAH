@@ -411,6 +411,46 @@ class Index extends Component
                 }
 
                 $this->apiResults = $results;
+            } elseif ($this->apiSource === 'santriai') {
+                $santriService = app(\App\Services\SantriAiService::class);
+                $this->lastExecutedUrl = 'https://santriai.com/perpus_digital/api_kitab.php (SantriAI Kitabuna)';
+
+                $res = $santriService->getBooks(query: $query, limit: 12);
+                $this->lastResponseTime = round((microtime(true) - $startTime) * 1000);
+                $this->apiRawJson = json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+                if (! empty($res['error'])) {
+                    $this->apiError = $res['error'];
+                    return;
+                }
+
+                if (empty($res['items'])) {
+                    $this->apiError = 'Tidak ada kitab ditemukan di SantriAI Maktabah untuk pencarian "'.$query.'".';
+                    return;
+                }
+
+                $results = [];
+                foreach ($res['items'] as $item) {
+                    $results[] = [
+                        'id' => (string) $item['id'],
+                        'source' => 'SantriAI Maktabah',
+                        'title' => $item['title'],
+                        'authors' => ! empty($item['author']) ? [$item['author']] : [],
+                        'publisher' => 'Maktabah SantriAI',
+                        'publish_year' => (int) date('Y'),
+                        'page_count' => null,
+                        'isbn' => null,
+                        'edition' => null,
+                        'description' => "Kitab fan {$item['category']} karya {$item['author']}.",
+                        'cover_url' => null,
+                        'categories' => [$item['category']],
+                        'preview_url' => null,
+                        'download_url' => null,
+                        'ebook_file' => null,
+                        'type' => 'ebook',
+                    ];
+                }
+                $this->apiResults = $results;
             } elseif ($this->apiSource === 'google') {
                 $params = [
                     'q' => $query,

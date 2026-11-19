@@ -1,16 +1,11 @@
 @props(['heading' => null, 'subheading' => null, 'icon' => null])
-<div {{ $attributes->merge(['class' => 'rounded-xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-soft transition duration-150']) }}>
+<section {{ $attributes->merge(['class' => 'border-t border-stone-950/10 bg-white/35 px-5 py-5 sm:px-6 sm:py-6']) }}>
     @if($heading || isset($header))
-        <div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div class="flex items-center gap-3">
-                @if($icon)
-                    <div class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-800 text-sm font-semibold border border-emerald-100">
-                        {{ $icon }}
-                    </div>
-                @endif
                 <div>
-                    <h3 class="text-base font-bold tracking-tight text-slate-900">{{ $heading }}</h3>
-                    @if($subheading)<p class="text-xs text-slate-500 mt-0.5">{{ $subheading }}</p>@endif
+                    <h3 class="text-base font-semibold text-stone-900">{{ $heading }}</h3>
+                    @if($subheading)<p class="mt-1 text-sm text-stone-500">{{ $subheading }}</p>@endif
                 </div>
             </div>
             @isset($actions)
@@ -19,4 +14,4 @@
         </div>
     @endif
     {{ $slot }}
-</div>
+</section>

@@ -8,7 +8,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     @php($guestFavicon = \App\Models\Setting::get('favicon'))
     @if($guestFavicon)
@@ -18,12 +18,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="min-h-full font-sans bg-slate-900 text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative antialiased selection:bg-emerald-600 selection:text-white">
-    {{-- Calm Islamic / institutional pattern overlay --}}
-    <div class="fixed inset-0 bg-gradient-to-br from-brand-950 via-slate-900 to-slate-950 opacity-95"></div>
-    <div class="fixed inset-0 bg-[radial-gradient(#166534_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none"></div>
-
-    <div class="relative z-10 sm:mx-auto sm:w-full sm:max-w-md px-4">
+<body class="relative flex min-h-dvh flex-col justify-center bg-brand-950 py-12 font-sans text-stone-100 antialiased selection:bg-emerald-600 selection:text-white sm:px-6 lg:px-8">
+    <div class="absolute inset-y-0 left-0 w-1 bg-amber-400" aria-hidden="true"></div>
+    <div class="relative z-10 px-4 sm:mx-auto sm:w-full sm:max-w-sm">
         {{ $slot }}
     </div>
 

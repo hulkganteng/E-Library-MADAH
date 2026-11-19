@@ -4,8 +4,10 @@ namespace App\Livewire\Books;
 
 use App\Models\Book;
 use App\Models\BookCopy;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 
 class Collections extends Component
@@ -61,7 +63,7 @@ class Collections extends Component
     {
         Gate::authorize('eksemplar.view');
 
-        $copies = BookCopy::with('book.shelf')
+        $copies = BookCopy::with(['book.shelf', 'book.authors', 'book.category'])
             ->when($this->book_id, fn ($q) => $q->where('book_id', $this->book_id))
             ->orderBy('inventory_code')
             ->get();
@@ -72,8 +74,19 @@ class Collections extends Component
             return;
         }
 
+        $logoSetting = Setting::get('logo');
+        $logoBase64 = null;
+        if ($logoSetting && Storage::disk('public')->exists($logoSetting)) {
+            $path = Storage::disk('public')->path($logoSetting);
+            $mime = mime_content_type($path);
+            $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+        }
+
         $pdf = Pdf::loadView('pdf.qr-labels', [
             'copies' => $copies,
+            'logoBase64' => $logoBase64,
+            'schoolName' => Setting::get('school_name', 'MA Assadah'),
+            'libraryName' => Setting::get('library_name', 'E-Library'),
         ])->setPaper('a4', 'portrait');
 
         return response()->streamDownload(fn () => print ($pdf->output()), 'label-qr-buku.pdf');

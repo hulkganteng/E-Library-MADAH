@@ -454,6 +454,13 @@
                 </button>
                 <button
                     type="button"
+                    wire:click="$set('apiSource', 'santriai')"
+                    class="flex-1 py-1.5 px-3 rounded-md transition text-center cursor-pointer {{ $apiSource === 'santriai' ? 'bg-white text-emerald-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900' }}"
+                >
+                    SantriAI (Maktabah)
+                </button>
+                <button
+                    type="button"
                     wire:click="$set('apiSource', 'openlibrary')"
                     class="flex-1 py-1.5 px-3 rounded-md transition text-center cursor-pointer {{ $apiSource === 'openlibrary' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900' }}"
                 >

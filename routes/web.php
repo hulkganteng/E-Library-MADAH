@@ -22,6 +22,7 @@ use App\Livewire\Notifications;
 use App\Livewire\Reports\Index as Reports;
 use App\Livewire\Settings\Index as Settings;
 use App\Livewire\Sibi\Index as Sibi;
+use App\Livewire\Maktabah\Index as Maktabah;
 use App\Livewire\Visits\GuestBook;
 use App\Livewire\Visits\Index as Visits;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,7 @@ Route::post('/logout', function () {
 Route::get('/katalog', Catalog::class)->name('catalog.index')->middleware('throttle:120,1');
 Route::get('/katalog/{book}', CatalogShow::class)->name('catalog.show')->middleware('throttle:120,1');
 Route::get('/sibi', Sibi::class)->name('sibi.index')->middleware('throttle:60,1');
+Route::get('/maktabah', Maktabah::class)->name('maktabah.index')->middleware('throttle:60,1');
 Route::get('/display', Display::class)->name('display.index')->middleware('throttle:120,1');
 Route::get('/peminjaman', Loans::class)->name('loans.index')->middleware('throttle:60,1');
 Route::get('/buku-tamu', GuestBook::class)->name('visits.guest-book')->middleware('throttle:30,1');

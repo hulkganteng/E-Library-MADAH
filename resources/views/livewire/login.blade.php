@@ -1,23 +1,23 @@
 @props(['title' => 'Masuk'])
-<div class="w-full max-w-md mx-auto">
-    <div class="rounded-2xl border border-slate-200/90 bg-white p-7 sm:p-9 shadow-soft text-slate-800">
+<div class="mx-auto w-full max-w-xs">
+    <div class="border border-white/10 bg-[#fffdf8] p-7 text-stone-800 sm:p-8">
         {{-- Header & Branding --}}
         @php($loginLogo = \App\Models\Setting::get('logo'))
         @php($loginSchoolName = \App\Models\Setting::get('school_name', 'Madrasah Aliyah Assadah'))
         @php($loginLibName = \App\Models\Setting::get('library_name', 'E-Library'))
 
         <div class="text-center mb-7">
-            <div class="mx-auto mb-3.5 grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 border border-emerald-100 shadow-2xs overflow-hidden p-1.5">
+            <div class="mx-auto mb-4 grid size-14 place-items-center overflow-hidden border border-stone-950/10 bg-stone-100 p-1.5">
                 @if($loginLogo)
                     <img src="{{ asset('storage/' . $loginLogo) }}" class="h-full w-full object-contain" alt="Logo">
                 @else
-                    <div class="grid h-full w-full place-items-center rounded-xl bg-emerald-700 text-white font-serif font-bold text-xl">
+                    <div class="grid size-full place-items-center bg-emerald-800 font-arabic text-xl font-semibold text-white">
                         م
                     </div>
                 @endif
             </div>
-            <h1 class="text-xl font-bold tracking-tight text-slate-900 font-serif">{{ $loginLibName ?: 'E-Library' }}</h1>
-            <p class="mt-1 text-xs text-slate-500 font-medium">{{ $loginSchoolName ?: 'Madrasah Aliyah Assadah' }}</p>
+            <h1 class="text-xl font-semibold tracking-tight text-stone-950">{{ $loginLibName ?: 'E-Library' }}</h1>
+            <p class="mt-1 text-sm text-stone-500">{{ $loginSchoolName ?: 'Madrasah Aliyah Assadah' }}</p>
         </div>
 
         {{-- Session Flash Alert --}}
@@ -55,7 +55,7 @@
             <div class="pt-2">
                 <button
                     type="submit"
-                    class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-emerald-600/20 active:bg-emerald-900 transition duration-150 cursor-pointer"
+                    class="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-emerald-800 px-3 py-2.5 text-sm font-medium text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:bg-emerald-950"
                 >
                     <span wire:loading.remove wire:target="login">Masuk ke Akun</span>
                     <span wire:loading wire:target="login" class="inline-flex items-center gap-2">

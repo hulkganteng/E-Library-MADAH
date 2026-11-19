@@ -9,7 +9,7 @@
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     @php($appFavicon = \App\Models\Setting::get('favicon'))
     @php($appLogo = \App\Models\Setting::get('logo'))
@@ -23,8 +23,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="h-full font-sans bg-slate-100/70 text-slate-800 antialiased selection:bg-emerald-600 selection:text-white">
-<div x-data="{ open: false }" class="min-h-full lg:flex">
+<body class="h-full bg-[#f4f1ea] font-sans text-stone-800 antialiased selection:bg-emerald-700 selection:text-white">
+<div x-data="{ open: false }" class="isolate min-h-full lg:flex">
     @php($user = auth()->user())
     @php($isAuth = (bool)$user)
 
@@ -44,17 +44,17 @@
 
     {{-- Sidebar --}}
     <aside
-        class="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-brand-950 text-slate-100 transition-transform duration-200 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:translate-x-0 shrink-0 border-r border-brand-900/60"
+        class="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] -translate-x-full flex-col bg-brand-950 text-slate-100 transition-transform duration-200 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:translate-x-0 shrink-0 border-r border-brand-900/60"
         :class="open ? 'translate-x-0' : '-translate-x-full'"
     >
         {{-- Logo Header --}}
         <div class="flex h-16 shrink-0 items-center justify-between border-b border-brand-900/80 px-5">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group">
-                <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/10 text-lg font-bold text-brand-950 shadow-sm transition-transform group-hover:scale-105 overflow-hidden p-1">
+                <div class="grid size-10 shrink-0 place-items-center overflow-hidden border border-white/15 bg-white/8 p-1 text-lg font-semibold text-brand-950">
                     @if($appLogo)
                         <img src="{{ asset('storage/' . $appLogo) }}" class="h-full w-full object-contain" alt="Logo">
                     @else
-                        <div class="grid h-full w-full place-items-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-lg font-bold text-brand-950">
+                        <div class="grid size-full place-items-center bg-amber-400 text-lg font-semibold text-brand-950">
                             م
                         </div>
                     @endif
@@ -100,6 +100,12 @@
                             <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>
                         </x-slot:icon>
                         Buku SIBI Kemdikbud
+                    </x-nav-link>
+                    <x-nav-link :href="route('maktabah.index')" :active="request()->routeIs('maktabah.*')">
+                        <x-slot:icon>
+                            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                        </x-slot:icon>
+                        Maktabah Kitabuna
                     </x-nav-link>
                     <x-nav-link :href="route('display.index')" :active="request()->routeIs('display.*')">
                         <x-slot:icon>
@@ -316,7 +322,7 @@
     {{-- Main Canvas --}}
     <div class="flex min-w-0 flex-1 flex-col">
         {{-- Sticky Top Header --}}
-        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-3.5 sm:px-6 lg:px-8 backdrop-blur-md">
+        <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-stone-950/10 bg-[#faf8f3]/95 px-3.5 backdrop-blur-md sm:px-6 lg:px-8">
             <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <button
                     type="button"
@@ -342,7 +348,7 @@
                         }
                     }"
                     x-init="updateTime(); setInterval(() => updateTime(), 1000)"
-                    class="hidden md:flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-1.5 text-xs font-mono font-semibold text-slate-700 shadow-2xs"
+                    class="hidden items-center gap-1.5 text-sm font-medium tabular-nums text-stone-500 md:flex"
                     title="Waktu Sistem Terkini"
                 >
                     <svg class="h-3.5 w-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -382,14 +388,14 @@
         </header>
 
         {{-- Page Body --}}
-        <main class="flex-1 p-3.5 sm:p-6 lg:p-8">
+        <main class="flex-1 p-4 sm:p-6 lg:p-8">
             <div class="mx-auto max-w-7xl">
                 {{ $slot }}
             </div>
         </main>
 
         {{-- Footer --}}
-        <footer class="border-t border-slate-200/80 bg-white px-6 py-4 text-center text-xs text-slate-500">
+        <footer class="border-t border-stone-950/10 bg-[#faf8f3] px-6 py-4 text-center text-sm text-stone-500">
             © {{ date('Y') }} Perpustakaan Madrasah Aliyah Assadah. Semua hak dilindungi.
         </footer>
     </div>

@@ -7,7 +7,7 @@
     />
 
     {{-- Search & Filter Toolbar --}}
-    <div class="rounded-xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-soft">
+    <div class="border-y border-stone-950/10 py-4 sm:py-5">
         <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-12">
             {{-- Search Bar --}}
             <div class="sm:col-span-6 relative">
@@ -19,7 +19,7 @@
                     type="search"
                     aria-label="Cari judul buku, nama penulis, atau nomor ISBN"
                     placeholder="Cari judul buku, nama penulis, atau nomor ISBN..."
-                    class="w-full rounded-lg border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-600 focus:ring-3 focus:ring-emerald-600/15 placeholder:text-slate-400"
+                    class="w-full rounded-md border border-stone-950/15 bg-[#fffdf8] py-2.5 pr-4 pl-10 text-base text-stone-800 outline-none focus:border-emerald-700 sm:text-sm"
                 >
             </div>
 
@@ -28,7 +28,7 @@
                 <select
                     wire:model.live="category"
                     aria-label="Filter kategori buku"
-                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-600 focus:ring-3 focus:ring-emerald-600/15"
+                    class="w-full rounded-md border border-stone-950/15 bg-[#fffdf8] px-3 py-2.5 text-base text-stone-800 outline-none focus:border-emerald-700 sm:text-sm"
                 >
                     <option value="">Semua Kategori</option>
                     @foreach($categories as $c)
@@ -42,7 +42,7 @@
                 <select
                     wire:model.live="type"
                     aria-label="Filter format koleksi"
-                    class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-600 focus:ring-3 focus:ring-emerald-600/15"
+                    class="w-full rounded-md border border-stone-950/15 bg-[#fffdf8] px-3 py-2.5 text-base text-stone-800 outline-none focus:border-emerald-700 sm:text-sm"
                 >
                     <option value="">Semua Format</option>
                     <option value="fisik">Buku Fisik</option>
@@ -83,16 +83,13 @@
     </div>
 
     {{-- Books Grid --}}
-    <div class="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
+    <div class="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4 xl:grid-cols-5">
         @forelse($books as $book)
             <x-book-card :book="$book" />
         @empty
-            <div class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
-                <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
-                </div>
-                <h3 class="text-base font-bold text-slate-800">Tidak ada buku ditemukan</h3>
-                <p class="mt-1 text-xs text-slate-500 max-w-sm mx-auto">Coba sesuaikan kata kunci pencarian atau reset filter untuk melihat koleksi lainnya.</p>
+            <div class="col-span-full border-y border-stone-950/10 py-16 text-center">
+                <h3 class="text-base font-semibold text-stone-800">Tidak ada buku ditemukan</h3>
+                <p class="mx-auto mt-1 max-w-sm text-base text-stone-500 sm:text-sm">Coba sesuaikan kata kunci pencarian atau reset filter untuk melihat koleksi lainnya.</p>
                 @if($search || $category || $type)
                     <button
                         wire:click="clear"
